@@ -1,0 +1,80 @@
+---
+title: "BadUSB & BadKB"
+description: "USB HID injection and Bluetooth HID injection with custom keyboard layouts. Run keystroke injection scripts over USB or wirelessly via Bluetooth."
+---
+
+Unleashed Firmware includes **BadUSB** for USB HID keystroke injection and **BadKB** for the same capability over Bluetooth. BadKB is fully integrated into the BadUSB app — there is no separate app to install.
+
+<Warning>
+  HID injection tools can execute arbitrary commands on a connected computer. Only use them on your own devices or with explicit permission from the device owner.
+</Warning>
+
+## BadUSB
+
+BadUSB makes the Flipper Zero appear as a USB keyboard to any host computer. When a script runs, the Flipper sends keystrokes to the host exactly as if a user were typing — bypassing application-level controls, since the input comes from a trusted HID device.
+
+Scripts are stored as `.txt` files on the SD card in the `badusb/` directory. Select a script from the BadUSB app and press **OK** to run it.
+
+### Script format
+
+BadUSB scripts use a simple text format based on the Rubber Ducky scripting syntax:
+
+```text example.txt
+REM Open terminal and run a command
+DELAY 1000
+GUI r
+DELAY 500
+STRING cmd
+ENTER
+DELAY 500
+STRING echo Hello from Flipper
+ENTER
+```
+
+Key commands:
+
+| Command | Description |
+|---|---|
+| `REM` | Comment — not executed |
+| `DELAY <ms>` | Wait for the specified number of milliseconds |
+| `STRING <text>` | Type the given text |
+| `ENTER` | Press the Enter key |
+| `GUI <key>` | Windows key + another key (e.g., `GUI r` opens Run) |
+| `CTRL <key>` | Control + key combination |
+| `ALT <key>` | Alt + key combination |
+| `SHIFT <key>` | Shift + key combination |
+
+### Custom keyboard layouts
+
+By default, BadUSB uses the US English keyboard layout. If the target computer uses a different layout (for example, German, French, or Russian), `STRING` commands will produce incorrect characters because the key codes differ between layouts.
+
+Unleashed Firmware supports custom keyboard layout files. Layout files map Flipper key codes to the correct scan codes for the target keyboard. Community-maintained layouts are available at [github.com/dummy-decoy/flipperzero_badusb_kl](https://github.com/dummy-decoy/flipperzero_badusb_kl).
+
+To use a layout, place the `.kl` file on your SD card and select it in the BadUSB app settings before running a script.
+
+## BadKB
+
+**BadKB** is BadUSB over Bluetooth. Instead of connecting via USB, the Flipper pairs with the target computer as a Bluetooth keyboard and sends the same HID keystrokes wirelessly.
+
+BadKB is integrated directly into the BadUSB app. The same script format and keyboard layout files work for both USB and Bluetooth modes.
+
+<Note>
+  BadKB requires the target computer to accept the Flipper as a Bluetooth keyboard. The pairing step may prompt for confirmation on the target device.
+</Note>
+
+<Tabs>
+  <Tab title="USB (BadUSB)">
+    1. Place your script in `badusb/` on the SD card.
+    2. Open the **BadUSB** app on the Flipper.
+    3. Select your script file.
+    4. Connect the Flipper to the target computer via USB.
+    5. Press **OK** to run the script.
+  </Tab>
+  <Tab title="Bluetooth (BadKB)">
+    1. Place your script in `badusb/` on the SD card.
+    2. Open the **BadUSB** app on the Flipper.
+    3. Switch the mode to **BT** (Bluetooth) in the app.
+    4. Pair the Flipper with the target computer as a Bluetooth keyboard.
+    5. Select your script file and press **OK** to run it.
+  </Tab>
+</Tabs>

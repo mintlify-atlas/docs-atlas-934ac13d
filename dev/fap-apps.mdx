@@ -1,0 +1,240 @@
+---
+title: 'FAP apps'
+description: 'How to build, run, and debug Flipper App Package (FAP) files — ELF executables with embedded metadata that load and run directly from the SD card.'
+---
+
+FAPs (Flipper App Packages) are `.elf` executables with metadata and optional assets bundled in. Unlike apps compiled into the firmware, FAPs live on the SD card and are loaded into RAM at runtime. This lets you install, update, and distribute apps without reflashing the device.
+
+## How FAPs work
+
+Flipper's MCU cannot execute code directly from external storage. When you launch a FAP, the App Loader:
+
+1. Reads the FAP file from the SD card
+2. Verifies integrity and checks API version compatibility
+3. Copies the code and data sections to RAM
+4. Processes relocations and resolves imported symbol addresses using the firmware's symbol table
+5. Starts the app
+
+Because only code and data sections are loaded, the amount of occupied RAM is less than the total FAP file size. However, RAM available for heap allocations is reduced compared to running the same app from flash.
+
+<Note>
+  FAPs do not depend on a specific firmware version. Compatibility is determined entirely by the API major version embedded in the FAP's metadata.
+</Note>
+
+## Creating a FAP
+
+<Steps>
+  <Step title="Create your app folder">
+    Place your source code in a subfolder under `applications_user/`:
+
+    ```text
+    applications_user/
+    └── my_app/
+        ├── application.fam
+        └── my_app.c
+    ```
+  </Step>
+
+  <Step title="Write the manifest">
+    Set `apptype` to `FlipperAppType.EXTERNAL` in your `application.fam`:
+
+    ```python application.fam
+    App(
+        appid="my_app",
+        apptype=FlipperAppType.EXTERNAL,
+        name="My App",
+        entry_point="my_app_main",
+        fap_version="1.0",
+        fap_category="Misc",
+        fap_description="My first external app.",
+        fap_author="Your Name",
+        stack_size=2 * 1024,
+    )
+    ```
+
+    See [App manifests](/dev/app-manifests) for a complete parameter reference.
+  </Step>
+
+  <Step title="Write your entry point">
+    Your entry point function signature must match the expected form:
+
+    ```c my_app.c
+    #include <furi.h>
+    #include <gui/gui.h>
+
+    int32_t my_app_main(void* p) {
+        UNUSED(p);
+        // Your app logic here
+        return 0;
+    }
+    ```
+  </Step>
+
+  <Step title="Build and deploy">
+    Build and upload your app over USB with a single command:
+
+    ```bash
+    ./fbt launch APPSRC=applications_user/my_app
+    ```
+
+    The app is compiled, transferred to the Flipper via USB, and launched automatically.
+  </Step>
+</Steps>
+
+---
+
+## Build commands
+
+<CardGroup cols={2}>
+  <Card title="Build a single FAP" icon="hammer">
+    ```bash
+    ./fbt fap_{APPID}
+    ```
+    Replace `{APPID}` with your app's `appid` from the manifest. The built `.fap` is placed in the `dist/` folder.
+  </Card>
+  <Card title="Build and launch over USB" icon="rocket">
+    ```bash
+    ./fbt launch APPSRC=applications_user/path/to/app
+    ```
+    Builds the FAP, uploads it to a connected Flipper, and starts it. Also available in VS Code as **Launch App on Flipper** (Ctrl+Shift+B).
+  </Card>
+  <Card title="Build without deploying" icon="package">
+    ```bash
+    ./fbt build APPSRC=applications_user/path/to/app
+    ```
+    Compiles the FAP without uploading. Also available in VS Code as **Build App**.
+  </Card>
+  <Card title="Build all FAPs" icon="layers">
+    ```bash
+    ./fbt faps
+    ```
+    Builds every app with `apptype=FlipperAppType.EXTERNAL`. Use `./fbt fap_dist` to also copy the results to the `dist/` folder.
+  </Card>
+</CardGroup>
+
+---
+
+## FAP assets
+
+FAPs can bundle private static and animated images that are compiled alongside the app source code.
+
+<Steps>
+  <Step title="Place images in a subfolder">
+    Create a folder inside your app's directory for your image assets. Follow the same naming conventions as firmware assets (see `assets/ReadMe.md`):
+
+    ```text
+    applications_user/my_app/
+    ├── application.fam
+    ├── my_app.c
+    └── images/
+        ├── MyIcon_10x10.png
+        └── MyAnim_128x64
+            ├── frame_rate
+            ├── meta.txt
+            └── frame_0.png
+    ```
+  </Step>
+
+  <Step title="Reference the folder in the manifest">
+    Add the `fap_icon_assets` field pointing to the images subfolder:
+
+    ```python application.fam
+    App(
+        appid="my_app",
+        apptype=FlipperAppType.EXTERNAL,
+        fap_icon_assets="images",
+        # ... other fields
+    )
+    ```
+  </Step>
+
+  <Step title="Include the generated header in your source">
+    `fbt` generates a header file named `{APPID}_icons.h`. Include it to access your assets:
+
+    ```c my_app.c
+    #include "my_app_icons.h"
+
+    // Use assets the same way as firmware built-in icons
+    canvas_draw_icon(canvas, 0, 0, &I_MyIcon_10x10);
+    ```
+
+    The generated constants follow the same naming pattern as `assets_icons.h` from the main firmware.
+  </Step>
+</Steps>
+
+---
+
+## Debugging FAPs
+
+`fbt` ships with a GDB Python script at `debug/flipperapps.py` that enables source-level debugging of FAPs. It is loaded automatically in the default debugging configurations for both `fbt` and the stock VS Code profile.
+
+With it you can set breakpoints, inspect variables, and step through FAP code as if it were part of the main firmware.
+
+<Warning>
+  The firmware build type (Debug or Release) must match the FAP build type, and `build/latest` must be symlinked to that build directory. Mismatches cause debugging to fail silently.
+</Warning>
+
+### Setting up the debug environment
+
+<Steps>
+  <Step title="Build the firmware">
+    ```bash
+    ./fbt
+    ```
+    This produces a firmware image and creates the `build/latest` symlink pointing to the build output.
+  </Step>
+
+  <Step title="Flash the firmware">
+    ```bash
+    ./fbt flash
+    ```
+    Flash the freshly built firmware to your Flipper over SWD.
+  </Step>
+
+  <Step title="Build and run your FAP">
+    ```bash
+    ./fbt launch APPSRC=applications_user/my_app
+    ```
+    Upload your FAP and run it on the device.
+  </Step>
+
+  <Step title="Attach the debugger">
+    ```bash
+    ./fbt debug
+    ```
+    Or attach from VS Code using the default debug configuration. When a debugging session is active, the firmware triggers a breakpoint after loading the FAP into memory but before running any of its code. This gives you a chance to set breakpoints in the FAP before execution begins.
+  </Step>
+</Steps>
+
+<Note>
+  Breakpoints set before the FAP is loaded may need to be re-set after loading, because the debugger does not know the FAP's final load address until after relocation is complete.
+</Note>
+
+---
+
+## API versioning
+
+Not all firmware functions are available to FAPs. The available subset is defined in `api_symbols.csv`, located in the `targets/` directory for each hardware target.
+
+`fbt` uses semantic versioning for this API surface:
+
+- **Major version** — incremented when there are breaking changes (removed functions or changed signatures). FAPs check only the major version at load time; a mismatch prevents the app from running.
+- **Minor version** — incremented when new symbols are added without breaking existing ones.
+
+### How the symbol table works
+
+The symbol table is the runtime list of functions and variables that FAPs can import. It is generated from `api_symbols.csv` and compiled into the `fap_loader` app. When a FAP is loaded, the App Loader resolves all imported symbol addresses using this table. If any required symbol is missing, `fbt` issues a warning during build and the FAP will not run on device.
+
+### Managing api_symbols.csv
+
+API versioning is mostly automated. When you rebuild the firmware after changing exported headers:
+
+1. `fbt` detects changes in the symbols gathered from `SDK_HEADERS`
+2. It stops the build, updates the version, and marks new entries with `"?"`
+3. You review each `"?"` entry and change it to:
+   - `"+"` to expose the symbol to FAPs
+   - `"-"` to keep it firmware-internal
+
+<Warning>
+  `fbt` refuses to build firmware until all `"?"` entries are resolved to `"+"` or `"-"`. The only case that requires manually incrementing the major version is when you demote an existing `"+"` entry to `"-"`.
+</Warning>

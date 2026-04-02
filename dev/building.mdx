@@ -1,0 +1,156 @@
+---
+title: 'Building firmware'
+description: 'How to clone, configure, and build Flipper Zero Unleashed firmware on Linux, macOS, and Windows.'
+---
+
+## Prerequisites
+
+<CardGroup cols={2}>
+  <Card title="Git" icon="code-branch">
+    Required. Install from [git-scm.com](https://git-scm.com/downloads) on Windows, or via your package manager (`apt`, `brew`, etc.) on Linux/macOS.
+  </Card>
+  <Card title="VSCode" icon="code">
+    Recommended for development. FBT includes a task and debugger configuration you can deploy with a single command.
+  </Card>
+</CardGroup>
+
+<Note>
+  You do not need to install a toolchain manually. FBT downloads and unpacks a pre-built toolchain automatically on first run and does not modify your system's `PATH`.
+</Note>
+
+## Clone the repository
+
+Always clone with `--recursive` so all submodules are initialized:
+
+```bash
+git clone --recursive https://github.com/DarkFlippers/unleashed-firmware.git
+```
+
+If you already cloned without `--recursive`, initialize submodules manually:
+
+```bash
+git submodule update --init --recursive
+```
+
+## VSCode setup
+
+FBT can deploy a ready-to-use VSCode workspace configuration:
+
+<Steps>
+  <Step title="Deploy the VSCode configuration">
+    Run the following command from the firmware root:
+
+    ```bash
+    ./fbt vscode_dist
+    ```
+
+    This copies the initial environment configuration into the `.vscode` folder. Run this once; you do not need to repeat it unless you want to reset the configuration.
+  </Step>
+  <Step title="Open the firmware folder">
+    In VSCode, select **File > Open Folder** and choose the firmware root directory.
+  </Step>
+  <Step title="Install recommended extensions">
+    On first open, VSCode will prompt you to install the recommended plugins listed in `.vscode/extensions.json`. Installing them gives you the best development experience.
+  </Step>
+</Steps>
+
+Once set up, build tasks are available in the **Terminal > Run Build Task** menu (`Ctrl+Shift+B`). Debugging requires a supported probe — a Wi-Fi devboard with stock firmware (Blackmagic), ST-Link, or J-Link.
+
+<Tip>
+  To use `clangd` instead of the default `cpptools` language server, deploy the config with:
+
+  ```bash
+  ./fbt vscode_dist LANG_SERVER=clangd
+  ```
+</Tip>
+
+## Build commands
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    **Compile everything and produce an updater package:**
+
+    ```bash
+    ./fbt COMPACT=1 DEBUG=0 updater_package
+    ```
+
+    **Build and launch an app on a connected Flipper:**
+
+    ```bash
+    ./fbt COMPACT=1 DEBUG=0 launch_app APPSRC=applications_user/yourplugin
+    ```
+  </Tab>
+  <Tab title="Windows">
+    **Compile everything and produce an updater package:**
+
+    ```powershell
+    ./fbt.cmd COMPACT=1 DEBUG=0 updater_package
+    ```
+
+    <Warning>
+      On Windows you may need to use `.\fbt.cmd` (backslash) instead of `./fbt.cmd` depending on your shell.
+    </Warning>
+
+    **Build and launch an app on a connected Flipper:**
+
+    ```powershell
+    ./fbt.cmd COMPACT=1 DEBUG=0 launch_app APPSRC=applications_user/yourplugin
+    ```
+  </Tab>
+</Tabs>
+
+## Build output
+
+Firmware artifacts are written to the `dist/` directory. To flash your device from a microSD card, use the file matching the pattern:
+
+```
+flipper-z-{target}-update-{suffix}.tgz
+```
+
+The default target is `f7` (Flipper Zero) and the default suffix is `local` (configurable via `DIST_SUFFIX` in `fbt_options.py`).
+
+## Toolchain management
+
+FBT handles the toolchain automatically:
+
+- On first run it downloads and unpacks a pre-built toolchain into the `toolchain/` subdirectory of the repo root.
+- It does **not** modify your global `PATH`.
+- Supported GCC versions are defined by `FBT_TOOLCHAIN_VERSIONS` in `fbt_options.py` (currently `12.3.x` and `13.2.x`).
+
+To use the toolchain tools outside of FBT (for example, to run `arm-none-eabi-gdb` directly), open an FBT shell:
+
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    source scripts/toolchain/fbtenv.sh
+    ```
+
+    Or, inline in your current shell:
+
+    ```bash
+    . `./fbt -s env`
+    ```
+  </Tab>
+  <Tab title="Windows">
+    ```powershell
+    scripts\toolchain\fbtenv.cmd
+    ```
+  </Tab>
+</Tabs>
+
+## Environment variables
+
+The following environment variables control FBT behavior:
+
+| Variable | Description |
+|---|---|
+| `FBT_NOENV=1` | Skip toolchain download and environment setup. Expects all tools on your system `PATH`. Not available on Windows. |
+| `FBT_TOOLCHAIN_PATH` | Directory to unpack the toolchain into. Defaults to `toolchain/` in the repo root. |
+| `FBT_NO_SYNC=1` | Skip the automatic `git submodule update --init` that FBT runs on every invocation. |
+| `FBT_VERBOSE=1` | Enable extra debug output from FBT and toolchain management scripts. |
+
+<Tip>
+  On \*nix, prefix variables inline: `FBT_NO_SYNC=1 ./fbt updater_package`
+
+  On Windows, set them in your shell first: `set "FBT_NO_SYNC=1"`
+</Tip>

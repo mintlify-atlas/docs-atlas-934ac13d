@@ -1,0 +1,582 @@
+---
+title: 'File formats'
+description: 'Reference for all Flipper Zero Unleashed file formats: Sub-GHz, NFC, Infrared, BadUSB, LF RFID, and iButton.'
+---
+
+Flipper Zero uses a key/value text format for most data files. Each file begins with a `Filetype` and `Version` field, followed by format-specific fields. Binary payloads are encoded as space-separated hex bytes.
+
+<Tabs>
+  <Tab title="Sub-GHz (.sub)">
+
+## Sub-GHz key files
+
+`.sub` files store Sub-GHz signals. A file has three sections: a header, preset information, and protocol data (or raw signal data).
+
+### Header fields
+
+| Field       | Type   | Description                                                        |
+| ----------- | ------ | ------------------------------------------------------------------ |
+| `Filetype`  | string | `Flipper SubGhz Key File` for key files, `Flipper SubGhz RAW File` for raw files |
+| `Version`   | uint   | File format version, currently `1`                                 |
+| `Frequency` | uint   | Carrier frequency in Hz (e.g. `433920000`)                        |
+
+### Preset fields
+
+| Field                  | Description                                                                                                    |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `Preset`               | Radio preset name. Use `FuriHalSubGhzPresetCustom` when specifying custom transceiver configuration.          |
+| `Custom_preset_module` | Transceiver identifier — `CC1101` for Flipper Zero. Required only with a custom preset.                       |
+| `Custom_preset_data`   | CC1101 register/value pairs followed by the 8-byte PA table, encoded in hex. Required only with custom preset. |
+
+**Built-in presets:**
+
+| Preset name                         | Modulation | Bandwidth |
+| ----------------------------------- | ---------- | --------- |
+| `FuriHalSubGhzPresetOok270Async`    | OOK        | 270 kHz   |
+| `FuriHalSubGhzPresetOok650Async`    | OOK        | 650 kHz   |
+| `FuriHalSubGhzPreset2FSKDev238Async`| 2-FSK      | 270 kHz, deviation 2 kHz  |
+| `FuriHalSubGhzPreset2FSKDev12KAsync`| 2-FSK      | 270 kHz, deviation 12 kHz |
+| `FuriHalSubGhzPreset2FSKDev476Async`| 2-FSK      | 270 kHz, deviation 47 kHz |
+
+### Key file data fields (Princeton example)
+
+| Field      | Description                            |
+| ---------- | -------------------------------------- |
+| `Protocol` | Protocol name (e.g. `Princeton`)       |
+| `Bit`      | Payload length in bits                 |
+| `Key`      | Payload data as hex bytes              |
+| `TE`       | Quantization interval in microseconds  |
+
+### Raw file data fields
+
+| Field      | Description                                                                                                       |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Protocol` | Must be `RAW`                                                                                                     |
+| `RAW_Data` | Array of signal timings in microseconds. Values are non-zero, start positive, and alternate sign. Up to 512 values per line. Repeat the field for multiple lines. |
+
+### BinRAW file data fields
+
+BinRAW files store a repeating signal sequence with byte-level granularity, without broadcast noise. They can emulate nearly all static protocols.
+
+| Field      | Description                                                                                                       |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Protocol` | Must be `BinRAW`                                                                                                  |
+| `Bit`      | Total payload length in bits across all blocks (max 4096)                                                         |
+| `TE`       | Quantization interval in microseconds                                                                             |
+| `Bit_RAW`  | Payload length in bits for the following `Data_RAW` block                                                         |
+| `Data_RAW` | Encoded duration sequence: each bit encodes one TE interval (1 = carrier on, 0 = carrier off). Repeat `Bit_RAW`/`Data_RAW` pairs for multiple blocks. |
+
+### Examples
+
+<AccordionGroup>
+  <Accordion title="Key file with standard preset">
+
+```text
+Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 95 D5 D4
+TE: 400
+```
+
+  </Accordion>
+  <Accordion title="Key file with custom preset">
+
+```text
+Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetCustom
+Custom_preset_module: CC1101
+Custom_preset_data: 02 0D 03 07 08 32 0B 06 14 00 13 00 12 30 11 32 10 17 18 18 19 18 1D 91 1C 00 1B 07 20 FB 22 11 21 B6 00 00 00 C0 00 00 00 00 00 00
+Protocol: Princeton
+Bit: 24
+Key: 00 00 00 00 00 95 D5 D4
+TE: 400
+```
+
+The `Custom_preset_data` format for CC1101: `XX YY XX YY .. 00 00 ZZ ZZ ZZ ZZ ZZ ZZ ZZ ZZ`, where `XX` is a register address, `YY` is its value, `00 00` marks the end of register data, and the final 8 `ZZ` bytes are the PA table.
+
+  </Accordion>
+  <Accordion title="RAW file with standard preset">
+
+```text
+Filetype: Flipper SubGhz RAW File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: RAW
+RAW_Data: 29262 361 -68 2635 -66 24113 -66 11 ...
+RAW_Data: -424 205 -412 159 -412 381 -240 181 ...
+RAW_Data: -1448 361 -17056 131 -134 233 -1462 131 -166 953 -100 ...
+```
+
+  </Accordion>
+  <Accordion title="BinRAW file">
+
+```text
+Filetype: Flipper SubGhz RAW File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: BinRAW
+Bit: 1572
+TE: 597
+Bit_RAW: 260
+Data_RAW: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0F 4A B5 55 4C B3 52 AC D5 2D 53 52 AD 4A D5 35 00
+Bit_RAW: 263
+Data_RAW: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 04 D5 32 D2 AB 2B 33 32 CB 2C CC B3 52 D3 00
+```
+
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+Long RAW payloads with short timings (under 10 µs) may not be read from SD fast enough during transmission. Verify your SD card has good read performance before transmitting complex RAW signals.
+</Warning>
+
+### Keeloq keystore file
+
+Additional manufacturer keys for the Keeloq decoder. Loaded from `/ext/subghz/assets/keeloq_mfcodes_user` at application start.
+
+| Field        | Type   | Description                                                        |
+| ------------ | ------ | ------------------------------------------------------------------ |
+| `Filetype`   | string | `Flipper SubGhz Keystore File`                                     |
+| `Version`    | uint   | `0`                                                                |
+| `Encryption` | uint   | `0` for user-provided files (encryption disabled)                  |
+
+Keys follow the header one per line in the format `AABBCCDDEEFFAABB:X:NAME`, where `X` is the encryption method (0–4) and `NAME` is a string up to 64 characters with no spaces.
+
+### SubGhz settings file
+
+Extends the application with extra presets and frequencies. Loaded from `/ext/subghz/assets/setting_user`.
+
+| Field                      | Type   | Description                                                                            |
+| -------------------------- | ------ | -------------------------------------------------------------------------------------- |
+| `Filetype`                 | string | `Flipper SubGhz Setting File`                                                          |
+| `Version`                  | uint   | `1`                                                                                    |
+| `Add_standard_frequencies` | bool   | Include standard firmware frequencies. Set to `false` to use only file-defined ones.  |
+| `Default_frequency`        | uint   | Default frequency for Read and Read RAW modes                                          |
+| `Frequency`                | uint   | Additional frequency for Read, Read RAW, and Frequency Analyzer. Repeat for multiple. |
+| `Hopper_frequency`         | uint   | Additional hopping frequency for Frequency Analyzer. Repeat for multiple.              |
+| `Custom_preset_name`       | string | Display name for a custom preset                                                       |
+| `Custom_preset_module`     | string | `CC1101` for Flipper Zero                                                              |
+| `Custom_preset_data`       | hex    | CC1101 register data — same format as in `.sub` files                                 |
+
+  </Tab>
+
+  <Tab title="NFC (.nfc)">
+
+## NFC device files
+
+`.nfc` files use `Filetype: Flipper NFC device` with `Version: 4`. All formats share a common header followed by device-specific fields.
+
+### Common header fields
+
+| Field         | Type   | Description                                                         |
+| ------------- | ------ | ------------------------------------------------------------------- |
+| `Filetype`    | string | `Flipper NFC device`                                                |
+| `Version`     | uint   | `4` (current version)                                               |
+| `Device type` | string | Card type: `ISO14443-3A`, `ISO14443-3B`, `ISO14443-4A`, `NTAG/Ultralight`, `Mifare Classic`, `Mifare DESFire` |
+| `UID`         | hex    | Card UID (4 or 7 bytes depending on card type)                     |
+
+### ISO14443-3A
+
+Additional fields: `ATQA` (2 bytes), `SAK` (1 byte).
+
+```text
+Filetype: Flipper NFC device
+Version: 4
+Device type: ISO14443-3A
+UID: 34 19 6D 41 14 56 E6
+ATQA: 00 44
+SAK: 00
+```
+
+### ISO14443-3B
+
+Additional fields: `Application data` (4 bytes), `Protocol info` (3 bytes). UID must be 4 bytes.
+
+```text
+Filetype: Flipper NFC device
+Version: 4
+Device type: ISO14443-3B
+UID: 30 1D B3 28
+Application data: 00 12 34 FF
+Protocol info: 11 81 E1
+```
+
+### ISO14443-4A
+
+Additional fields beyond ISO14443-3A: `ATS` (minimum 5 bytes — Answer to Select).
+
+```text
+Filetype: Flipper NFC device
+Version: 4
+Device type: ISO14443-4A
+UID: 04 48 6A 32 33 58 80
+ATQA: 03 44
+SAK: 20
+ATS: 06 75 77 81 02 80
+```
+
+### NTAG / Ultralight
+
+Supported subtypes: Mifare Ultralight, Mifare Ultralight 11, Mifare Ultralight 21, NTAG203, NTAG213, NTAG215, NTAG216, NTAG I2C 1K, NTAG I2C 2K, NTAG I2C Plus 1K, NTAG I2C Plus 2K.
+
+Additional fields beyond ISO14443-3A:
+
+| Field                    | Description                                           |
+| ------------------------ | ----------------------------------------------------- |
+| `Data format version`    | `2` (current)                                         |
+| `NTAG/Ultralight type`   | Concrete device subtype                               |
+| `Signature`              | 32-byte reply to the `READ_SIG` command               |
+| `Mifare version`         | 8-byte reply to the `GET_VERSION` command             |
+| `Counter 0/1/2`          | Monotonic counter values                              |
+| `Tearing 0/1/2`          | Anti-tearing flag bytes                               |
+| `Pages total`            | Total number of 4-byte pages                          |
+| `Pages read`             | Number of pages successfully read                     |
+| `Page N`                 | 4-byte page data, one field per page                  |
+| `Failed authentication attempts` | Auth failure counter                        |
+
+### Mifare Classic
+
+Additional fields beyond ISO14443-3A:
+
+| Field                 | Description                                               |
+| --------------------- | --------------------------------------------------------- |
+| `Mifare Classic type` | `1K` or `4K`                                              |
+| `Data format version` | `2` (current)                                             |
+| `Block N`             | 16-byte block data. Unknown blocks use `??` per byte.     |
+
+```text
+Filetype: Flipper NFC device
+Version: 4
+Device type: Mifare Classic
+UID: BA E2 7C 9D
+ATQA: 00 02
+SAK: 18
+Mifare Classic type: 4K
+Data format version: 2
+Block 0: BA E2 7C 9D B9 18 02 00 46 44 53 37 30 56 30 31
+Block 1: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Block 3: FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF
+```
+
+### Mifare DESFire
+
+Additional fields beyond ISO14443-4A: per-application and per-file data including PICC configuration, application IDs, key versions, file types, access rights, and file contents.
+
+### Key dictionaries
+
+Mifare Classic and Mifare Ultralight C dictionaries are plain text files with one hex key per line. Lines beginning with `#` and blank lines are ignored.
+
+```text
+# Standard keys
+FFFFFFFFFFFF
+A0A1A2A3A4A5
+D3F7D3F7D3F7
+000000000000
+```
+
+  </Tab>
+
+  <Tab title="Infrared (.ir)">
+
+## Infrared remote files
+
+`.ir` files store infrared remotes. The file begins with a header line and contains one or more button entries separated by `#` comment lines.
+
+```text
+Filetype: IR signals file
+Version: 1
+```
+
+Each button has a `name` and `type` field. `type` is either `parsed` (for known protocols) or `raw` (for unrecognized signals).
+
+### Parsed signal fields
+
+| Field      | Use    | Type   | Description                                                                   |
+| ---------- | ------ | ------ | ----------------------------------------------------------------------------- |
+| `name`     | both   | string | Button name. Printable ASCII only.                                            |
+| `type`     | both   | string | `parsed` or `raw`                                                             |
+| `protocol` | parsed | string | Protocol name. See supported protocols list below.                            |
+| `address`  | parsed | hex    | Payload address, 4 bytes                                                      |
+| `command`  | parsed | hex    | Payload command, 4 bytes                                                      |
+
+### Raw signal fields
+
+| Field        | Use | Type   | Description                                                                                                         |
+| ------------ | --- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| `frequency`  | raw | uint32 | Carrier frequency in Hz, typically `38000`                                                                         |
+| `duty_cycle` | raw | float  | Carrier duty cycle, typically `0.33`                                                                                |
+| `data`       | raw | uint32 | Space-separated timings in microseconds between logic level changes. Maximum 1024 elements.                        |
+
+### Supported parsed protocols
+
+```
+NEC, NECext, NEC42, NEC42ext, Samsung32,
+RC6, RC5, RC5X, SIRC, SIRC15, SIRC20,
+Kaseikyo, RCA
+```
+
+### Example
+
+```text
+Filetype: IR signals file
+Version: 1
+#
+name: Button_1
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 5D A0 00 00
+#
+name: Button_2
+type: raw
+frequency: 38000
+duty_cycle: 0.330000
+data: 504 3432 502 483 500 484 510 502 502 482 501 485 509 1452 504 1458 509 1452 504 481 501 474 509 3420 503
+#
+name: Button_3
+type: parsed
+protocol: SIRC
+address: 01 00 00 00
+command: 15 00 00 00
+```
+
+### Infrared library files
+
+Universal remote library files use the same `.ir` format with `Filetype: IR library file`. They use predefined button names so the universal remote application can identify functions (power, volume, channel, etc.).
+
+### Infrared test files (`.irtest`)
+
+Test files use the `parsed_array` type instead of `parsed`. A `parsed_array` entry includes a `count` field and optionally a `repeat` boolean. Signal names follow the pattern `<name><number>` (e.g. `decoder_input1`, `encoder_decoder_input3`). Each protocol must have a corresponding `.irtest` file.
+
+  </Tab>
+
+  <Tab title="BadUSB (.txt)">
+
+## BadUSB script files
+
+BadUSB scripts use an extended DuckyScript syntax compatible with classic USB Rubber Ducky 1.0 scripts. Scripts are plain `.txt` files — no compilation required. Both `\n` and `\r\n` line endings are supported. Empty lines and indentation with spaces or tabs are allowed.
+
+### Core commands
+
+| Command         | Parameters              | Notes                                           |
+| --------------- | ----------------------- | ----------------------------------------------- |
+| `REM`           | Comment text            | Comment line, ignored by interpreter            |
+| `DELAY`         | Milliseconds            | Pause execution once                            |
+| `DEFAULT_DELAY` | Milliseconds            | Add delay before every subsequent command       |
+| `DEFAULTDELAY`  | Milliseconds            | Same as `DEFAULT_DELAY`                         |
+| `STRING`        | Text                    | Type a text string                              |
+| `STRINGLN`      | Text                    | Type a text string and press Enter              |
+| `REPEAT`        | Count                   | Repeat the previous command N additional times  |
+
+### String delay
+
+| Command                | Parameters   | Notes                                         |
+| ---------------------- | ------------ | --------------------------------------------- |
+| `STRING_DELAY`         | Milliseconds | Applied once to the next `STRING` command     |
+| `STRINGDELAY`          | Milliseconds | Same as `STRING_DELAY`                        |
+| `DEFAULT_STRING_DELAY` | Milliseconds | Applied to every `STRING` command             |
+| `DEFAULTSTRINGDELAY`   | Milliseconds | Same as `DEFAULT_STRING_DELAY`                |
+
+### Key hold and release
+
+Up to 5 keys can be held simultaneously.
+
+| Command   | Parameters                      | Notes                                    |
+| --------- | ------------------------------- | ---------------------------------------- |
+| `HOLD`    | Special key or single character | Hold key until `RELEASE`                 |
+| `RELEASE` | Special key or single character | Release a held key                       |
+
+### Modifier keys
+
+`CTRL` (or `CONTROL`), `SHIFT`, `ALT`, `GUI` (or `WINDOWS`). Chain modifiers with hyphens or spaces: `CTRL-ALT DELETE`, `GUI r`.
+
+### Special keys
+
+`DOWNARROW`/`DOWN`, `LEFTARROW`/`LEFT`, `RIGHTARROW`/`RIGHT`, `UPARROW`/`UP`, `ENTER`, `DELETE`, `BACKSPACE`, `END`, `HOME`, `ESCAPE`/`ESC`, `INSERT`, `PAGEUP`, `PAGEDOWN`, `CAPSLOCK`, `NUMLOCK`, `SCROLLLOCK`, `PRINTSCREEN`, `BREAK`/`PAUSE`, `SPACE`, `TAB`, `MENU`/`APP`, `F1`–`F12`.
+
+### ALT+Numpad input
+
+For entering characters by code on Windows and some Linux systems.
+
+| Command     | Parameters     | Notes                              |
+| ----------- | -------------- | ---------------------------------- |
+| `ALTCHAR`   | Character code | Print a single character by code   |
+| `ALTSTRING` | Text           | Print text using ALT+Numpad        |
+| `ALTCODE`   | Text           | Same as `ALTSTRING`                |
+
+### Media keys
+
+Use `MEDIA <key>` to send consumer control keys:
+
+`POWER`, `REBOOT`, `SLEEP`, `LOGOFF`, `EXIT`, `HOME`, `BACK`, `FORWARD`, `REFRESH`, `SNAPSHOT`, `PLAY`, `PAUSE`, `PLAY_PAUSE`, `NEXT_TRACK`, `PREV_TRACK`, `STOP`, `EJECT`, `MUTE`, `VOLUME_UP`, `VOLUME_DOWN`, `FN`, `BRIGHT_UP`, `BRIGHT_DOWN`.
+
+### Additional commands
+
+| Command               | Parameters                    | Notes                                              |
+| --------------------- | ----------------------------- | -------------------------------------------------- |
+| `SYSRQ`               | Single character              | Send a Magic SysRq command                         |
+| `GLOBE`               | Special key or character      | Fn/Globe key for Mac/iPad                          |
+| `WAIT_FOR_BUTTON_PRESS` | None                        | Pause until the user presses a Flipper button      |
+
+### Mouse commands
+
+| Command        | Parameters           | Notes                              |
+| -------------- | -------------------- | ---------------------------------- |
+| `LEFTCLICK`    | None                 | Left mouse button click            |
+| `LEFT_CLICK`   | None                 | Same as `LEFTCLICK`                |
+| `RIGHTCLICK`   | None                 | Right mouse button click           |
+| `RIGHT_CLICK`  | None                 | Same as `RIGHTCLICK`               |
+| `MOUSEMOVE`    | x y (integers)       | Move mouse cursor                  |
+| `MOUSE_MOVE`   | x y (integers)       | Same as `MOUSEMOVE`                |
+| `MOUSESCROLL`  | delta (integer)      | Scroll mouse wheel                 |
+| `MOUSE_SCROLL` | delta (integer)      | Same as `MOUSESCROLL`              |
+
+### Custom USB device ID
+
+Set a custom USB VID/PID and device strings. Must be the **first line** of the script — it is executed before the script runs.
+
+```text
+ID 1234:abcd Flipper Devices:Flipper Zero
+```
+
+`VID` and `PID` are hex values and are required. Manufacturer and Product strings are optional.
+
+### Example script
+
+```text
+REM Open Run dialog and launch Notepad on Windows
+DEFAULT_DELAY 100
+GUI r
+DELAY 500
+STRING notepad
+ENTER
+DELAY 1000
+STRING Hello from Flipper Zero!
+ENTER
+```
+
+  </Tab>
+
+  <Tab title="LF RFID (.rfid)">
+
+## LF RFID key files
+
+`.rfid` files store a single low-frequency RFID key.
+
+### Format fields
+
+| Field      | Type   | Description                        |
+| ---------- | ------ | ---------------------------------- |
+| `Filetype` | string | `Flipper RFID key`                 |
+| `Version`  | uint   | `1`                                |
+| `Key type` | string | Key protocol type (see list below) |
+| `Data`     | hex    | Key data as space-separated bytes  |
+
+### Supported key types
+
+| Type          | Full name           |
+| ------------- | ------------------- |
+| `EM4100`      | EM-Micro EM4100     |
+| `H10301`      | HID H10301          |
+| `Idteck`      | IDTECK              |
+| `Indala26`    | Motorola Indala26   |
+| `IOProxXSF`   | Kantech IOProxXSF   |
+| `AWID`        | AWID                |
+| `FDX-A`       | FECAVA FDX-A        |
+| `FDX-B`       | ISO FDX-B           |
+| `HIDProx`     | Generic HIDProx     |
+| `HIDExt`      | Generic HIDExt      |
+| `Pyramid`     | Farpointe Pyramid   |
+| `Viking`      | Viking              |
+| `Jablotron`   | Jablotron           |
+| `Paradox`     | Paradox             |
+| `PAC/Stanley` | PAC/Stanley         |
+| `Keri`        | Keri                |
+| `Gallagher`   | Gallagher           |
+| `GProxII`     | Guardall GProx II   |
+
+### Example
+
+```text
+Filetype: Flipper RFID key
+Version: 1
+Key type: EM4100
+Data: 01 23 45 67 89
+```
+
+  </Tab>
+
+  <Tab title="iButton (.ibtn)">
+
+## iButton key files
+
+`.ibtn` files store a single iButton (1-Wire) key with all data required by the protocol.
+
+### Format fields (version 2 — current)
+
+| Field        | Type   | Description                                                                                          |
+| ------------ | ------ | ---------------------------------------------------------------------------------------------------- |
+| `Filetype`   | string | `Flipper iButton key`                                                                                |
+| `Version`    | uint   | `2`                                                                                                  |
+| `Protocol`   | string | One of: `DS1990`, `DS1992`, `DS1996`, `DS1971`, `DS1420`, `DSGeneric`, `Cyfral`, `Metakom`          |
+| `Rom Data`   | hex    | Read-only memory data (Dallas protocols only)                                                        |
+| `Sram Data`  | hex    | Static RAM data (DS1992 and DS1996 only)                                                             |
+| `Eeprom Data`| hex    | EEPROM data (DS1971 only)                                                                            |
+| `Data`       | hex    | Key data (Cyfral and Metakom only)                                                                   |
+
+<Note>
+`DSGeneric` is a catch-all protocol for unknown 1-Wire devices. It reads only the ROM without validation, and can represent keys with deliberately invalid family codes or checksums.
+</Note>
+
+<Note>
+`DS1420` is fully compatible with `DS1990` — the only difference is the family code (`0x01` for DS1990, `0x81` for DS1420).
+</Note>
+
+Fields after `Protocol` are protocol-dependent. When adding new protocols, you do not need to increment the format version — define the format in the protocol implementation instead.
+
+### Example
+
+```text
+Filetype: Flipper iButton key
+Version: 2
+Protocol: DS1992
+Rom Data: 08 DE AD BE EF FA CE 4E
+Sram Data: 4E 65 76 65 72 47 6F 6E 6E 61 47 69 76 65 59 6F 75 55 70 4E 65 76 65 72 47 6F 6E 6E 61 4C 65 74 59 6F 75 44 6F 77 6E
+```
+
+### Version 1 (deprecated)
+
+Version 1 used a flat `Key type` / `Data` structure with only three types: `Cyfral`, `Dallas`, and `Metakom`. Files are automatically converted to version 2 when saved.
+
+  </Tab>
+
+  <Tab title="Heatshrink (.tar)">
+
+## Heatshrink-compressed tarball format
+
+Flipper uses the Heatshrink compression library for `.tar` archives, enabling smaller OTA update packages. The format wraps a standard tar stream in a Heatshrink container.
+
+### Binary header structure
+
+The header is 7 bytes total, followed immediately by the compressed data stream.
+
+| Offset | Size    | Value / Description                                        |
+| ------ | ------- | ---------------------------------------------------------- |
+| 0–3    | 4 bytes | Magic: `0x48 0x53 0x44 0x53` (ASCII `HSDS`)               |
+| 4      | 1 byte  | Version: `0x01`                                            |
+| 5      | 1 byte  | Window size (`-w` parameter in Heatshrink CLI)             |
+| 6      | 1 byte  | Lookahead size (`-l` parameter in Heatshrink CLI)          |
+| 7+     | —       | Compressed data                                            |
+
+The window and lookahead size values correspond directly to the parameters used when compressing with the Heatshrink CLI tool.
+
+  </Tab>
+</Tabs>

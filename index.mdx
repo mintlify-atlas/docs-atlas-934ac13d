@@ -1,97 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Flipper Zero Unleashed Firmware"
+description: "The most stable custom firmware for Flipper Zero — unlocked Sub-GHz frequencies, new protocols, enhanced NFC, JavaScript scripting, and more."
 ---
 
-## Setting up
+Unleashed Firmware is a community-driven fork of the official Flipper Zero firmware. It removes regional Sub-GHz restrictions, adds dozens of new protocols, expands NFC support, and includes quality-of-life improvements — all while staying fully compatible with the official API and app ecosystem.
 
-Get your documentation site up and running in minutes.
+<Warning>
+  This software is intended solely for experimental and educational purposes. Use only within the bounds of applicable law. This project is developed independently and is not affiliated with Flipper Devices.
+</Warning>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+## Get started
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Unleashed Firmware via web installer, mobile app, qFlipper, or manual update.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="What's new" icon="sparkles" href="/features/sub-ghz">
+    Explore unlocked Sub-GHz frequencies, new protocols, and enhanced apps.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="FAQ" icon="circle-question" href="/faq">
+    Answers to common questions about installing, using, and troubleshooting.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Build from source" icon="hammer" href="/dev/building">
+    Clone the repo and compile Unleashed Firmware yourself.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Explore features
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Sub-GHz" icon="radio" href="/features/sub-ghz">
+    Unlocked frequencies, 60+ protocols, rolling code support, external CC1101 module.
+  </Card>
+  <Card title="NFC & RFID" icon="credit-card" href="/features/nfc-rfid">
+    Transit card parsers, EMV data reading, LFRFID fuzzer, extra Mifare Classic keys.
+  </Card>
+  <Card title="Infrared" icon="wave-sine" href="/features/infrared">
+    Universal remotes for TV, AC, projectors, fans, and audio devices.
+  </Card>
+  <Card title="BadUSB / BadKB" icon="keyboard" href="/features/badusb">
+    HID injection over USB and Bluetooth with custom keyboard layouts.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## For developers
 
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="App manifests" icon="file-code" href="/dev/app-manifests">
+    Define your app's entry point, type, dependencies, and SDK headers.
+  </Card>
+  <Card title="FAP apps" icon="puzzle-piece" href="/dev/fap-apps">
+    Build and deploy apps as SD card packages without recompiling firmware.
+  </Card>
+  <Card title="JavaScript SDK" icon="js" href="/dev/js/overview">
+    Write Flipper Zero apps in JavaScript — no C compiler required.
+  </Card>
+  <Card title="FBT reference" icon="terminal" href="/dev/fbt-reference">
+    Full reference for the Flipper Build Tool targets and options.
+  </Card>
+</CardGroup>

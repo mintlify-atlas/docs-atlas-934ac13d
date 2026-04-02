@@ -1,0 +1,140 @@
+---
+title: "Frequency settings"
+description: "Add custom Sub-GHz frequencies to Flipper's scan list and, if needed, extend the CC1101 frequency range beyond factory specifications."
+---
+
+Flipper Zero's Sub-GHz radio uses a Texas Instruments CC1101 transceiver. The CC1101 has three supported frequency bands. Unleashed Firmware ships with an extended frequency list that covers common protocols, and lets you add your own frequencies via a user settings file on the SD card.
+
+## CC1101 frequency bands
+
+| Band | Supported range | Notes |
+|---|---|---|
+| Low | 300–348 MHz | |
+| Mid | 386–464 MHz | Unleashed also adds 350 MHz and 467 MHz |
+| High | 778–928 MHz | |
+
+---
+
+## Adding custom frequencies
+
+The user frequency file lives on your SD card at:
+
+```
+subghz/assets/setting_user
+```
+
+The file ships as `setting_user.example`. Rename it by removing `.example` before making edits.
+
+### Main frequency list
+
+Add each frequency on its own line in the format below. The value must be exactly 9 digits (Hz).
+
+```text setting_user
+Frequency: 345000000
+Frequency: 433920000
+Frequency: 868350000
+```
+
+<Note>
+  User-added frequencies are appended **after** the built-in default list unless you disable the default list (see below).
+</Note>
+
+### Hopper frequency list
+
+The hopper scans multiple frequencies in sequence when using **Sub-GHz → Read** in hopping mode. Add hopper entries with the `Hopper_frequency` key.
+
+```text setting_user
+Hopper_frequency: 315000000
+Hopper_frequency: 433920000
+Hopper_frequency: 868350000
+```
+
+<Warning>
+  Keep the hopper list as short as possible. The more frequencies the hopper cycles through, the less time it spends on each one, which reduces the chance of catching a short transmission.
+</Warning>
+
+### Default frequency lists
+
+The built-in main frequency list includes:
+
+<AccordionGroup>
+  <Accordion title="300–348 MHz band (default entries)">
+    ```
+    300000000, 302757000, 303000000, 303875000, 303900000,
+    304250000, 307000000, 307500000, 307800000, 309000000,
+    310000000, 312000000, 312100000, 312200000, 313000000,
+    313850000, 314000000, 314350000, 314980000, 315000000,
+    318000000, 320000000, 320150000, 330000000, 345000000,
+    348000000, 350000000
+    ```
+  </Accordion>
+  <Accordion title="387–464 MHz band (default entries)">
+    ```
+    387000000, 390000000, 418000000, 430000000, 430500000,
+    431000000, 431500000, 433075000, 433220000, 433420000,
+    433657070, 433889000, 433920000 (default), 434075000,
+    434176948, 434190000, 434390000, 434420000, 434620000,
+    434775000, 438900000, 440175000, 462750000, 464000000,
+    467750000
+    ```
+  </Accordion>
+  <Accordion title="779–928 MHz band (default entries)">
+    ```
+    779000000, 868350000, 868400000, 868460000, 868800000,
+    868950000, 906400000, 915000000, 925000000, 928000000
+    ```
+  </Accordion>
+</AccordionGroup>
+
+The built-in hopper list scans: **315 MHz, 390 MHz, 430.5 MHz, 433.92 MHz, 434.42 MHz, 868.35 MHz**.
+
+### Disabling the default list
+
+To use **only** your user-defined frequencies (for example, to keep the selector uncluttered), change the following line in `setting_user`:
+
+```text before
+#Add_standard_frequencies: true
+```
+
+```text after
+Add_standard_frequencies: false
+```
+
+<Warning>
+  When `Add_standard_frequencies` is set to `false`, the main frequency list will be empty unless you add entries with the `Frequency:` key. Adding entries only to the hopper list while the main list is empty will not work — you must populate both lists.
+</Warning>
+
+---
+
+## Extending the frequency range (dangerous settings)
+
+<Warning>
+  **Hardware damage risk.** Transmitting on frequencies outside the CC1101's rated specification can damage the radio hardware. Flipper Devices and the Unleashed Firmware developers are not responsible for any hardware damage resulting from enabling this setting.
+  
+  You do not need extended range for the vast majority of real-world use cases. Only enable this if you know exactly what you are doing and why.
+</Warning>
+
+By default, Flipper enforces the CC1101's documented frequency ranges. The dangerous settings file removes those guardrails and extends the tunable range:
+
+| Band | Normal range | Extended range |
+|---|---|---|
+| Low | 300–348 MHz | 281–361 MHz |
+| Mid | 386–464 MHz | 378–481 MHz |
+| High | 778–928 MHz | 749–962 MHz |
+
+### Enabling extended range
+
+<Steps>
+  <Step title="Locate the dangerous settings file">
+    On your SD card, find the file: `subghz/assets/dangerous_settings`
+  </Step>
+  <Step title="Read the comments at the top of the file">
+    The file contains important warnings in its header. Read them before proceeding.
+  </Step>
+  <Step title="Change the value">
+    Find the line that reads `false` and change it to `true`.
+  </Step>
+  <Step title="Reboot Flipper">
+    Power-cycle your Flipper Zero for the change to take effect.
+  </Step>
+</Steps>

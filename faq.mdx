@@ -1,0 +1,248 @@
+---
+title: FAQ
+description: Answers to frequently asked questions about installing, configuring, and using Flipper Zero Unleashed Firmware.
+---
+
+<AccordionGroup>
+
+  <Accordion title="I just got my Flipper Zero. Where do I start?">
+    Start with the [official Flipper Zero main page](https://flipperzero.one/) and the [official docs](https://docs.flipper.net/) to learn the basics. Once you are comfortable with your device, come back here to install Unleashed Firmware for expanded features and removed region restrictions.
+  </Accordion>
+
+  <Accordion title="How do I install Unleashed Firmware?">
+    See the full [installation guide](/installation). The easiest method is the [Unleashed FW Web Installer](https://web.unleashedflip.com), which requires only a Chromium-based browser and a USB connection.
+  </Accordion>
+
+  <Accordion title="What do the build variant letters e, c mean? Which should I download?">
+    Each release ships three variants:
+
+    | Filename suffix | Base apps | Extra apps |
+    |---|:---:|:---:|
+    | _(none)_ | Yes | No |
+    | `c` | No | No |
+    | `e` | Yes | Yes |
+
+    - The **`e` build** includes both the base app pack and the extra community app pack — recommended for most users.
+    - The **blank (no suffix) build** includes only the base app pack.
+    - The **`c` build** ships firmware only, with no bundled third-party apps.
+
+    See the [full app lists](https://github.com/xMasterX/all-the-plugins) for what is included in each pack.
+  </Accordion>
+
+  <Accordion title="I installed Unleashed and now the backlight doesn't work">
+    You have enabled the RGB backlight mod setting, which is designed for Flipper Zeros with a custom RGB backlight hardware mod installed.
+
+    To fix this, go to **Settings → LCD & Notifications → RGB mod settings** and disable the RGB mod.
+
+    If your Flipper Zero does have the [RGB backlight hardware mod](https://github.com/quen0n/flipperzero-firmware-rgb#readme), enable the setting instead of disabling it.
+  </Accordion>
+
+  <Accordion title="What apps are included with Unleashed Firmware?">
+    The default and extra app pack contents are listed at [github.com/xMasterX/all-the-plugins](https://github.com/xMasterX/all-the-plugins/tree/dev). The `e` build includes both packs pre-installed. You can also download and install additional apps from the [official Flipper Apps Catalog](https://lab.flipper.net/apps) via the mobile app.
+  </Accordion>
+
+  <Accordion title="How do I use the Sub-GHz Remote app?">
+    1. Open the Sub-GHz Remote app, press the **Back** button, and select **New map file**.
+    2. Configure signal files and labels for each button. You can assign one signal to a single button and leave others empty — just skip file selection for buttons you don't need.
+    3. Save the new map file.
+    4. Open the map file and select your previously created file.
+    5. Press the assigned buttons to send the configured Sub-GHz signal files.
+  </Accordion>
+
+  <Accordion title="Where can I find which Sub-GHz protocols and frequencies are supported?">
+    The full list of supported protocols with their frequencies and modulations is at [SubGHzSupportedSystems.md](https://github.com/DarkFlippers/unleashed-firmware/blob/dev/documentation/SubGHzSupportedSystems.md).
+  </Accordion>
+
+  <Accordion title="My remote isn't supported. How do I record a RAW signal to request support?">
+    1. Open the Sub-GHz app and use **Frequency Analyzer** to find the approximate frequency your remote uses. Hold the button on your remote near the IR window on the Flipper. Once a frequency appears in the history list, hold OK to jump into Read mode and try a few button presses with different modulations (AM650, FM238, FM476, FM12K).
+    2. If no modulation decodes it, open **Read RAW**, set the correct frequency, set the RSSI Threshold to `----`, and record one RAW file for each modulation. Press REC and press one button 5 times holding it for 1–2 seconds, then 5 times holding it for 5 seconds each. Repeat for each button and label each file.
+    3. Copy the RAW files to your PC and [open an issue](https://github.com/DarkFlippers/unleashed-firmware/issues) in the firmware repo. Attach the RAW files in an archive and include high-quality photos of the remote (front, back, and disassembled if possible), the model, manufacturer, and any known information.
+
+    You can analyze signals yourself using the online tool at [lab.flipper.net/pulse-plotter](https://lab.flipper.net/pulse-plotter).
+  </Accordion>
+
+  <Accordion title="Can I use my Flipper Zero as a replacement key for my own car?">
+    No. Car key fobs use rolling codes. Attempting to clone a car fob using Read RAW will cause key desync or unpair with blacklist, which requires service tools to recover. Do not attempt this.
+  </Accordion>
+
+  <Accordion title="I installed Unleashed and now my mobile app won't connect (or I changed the Flipper name and it stopped connecting)">
+    1. In the mobile app, tap **Forget Flipper**.
+    2. Open your phone's **Settings → Bluetooth**, find the Flipper in the device list, and select **Forget device**.
+    3. On the Flipper itself, go to **Settings → Bluetooth → Forget all devices** and confirm.
+    4. Ensure Bluetooth is **ON** on the Flipper, then open the mobile app and pair again.
+  </Accordion>
+
+  <Accordion title="My pin, favourites, or other settings were reset to defaults after an update">
+    This is expected when a settings struct change is required between versions. Check the release changelogs for any notes about settings resets. This does not happen in every release — only in specific ones where struct changes were necessary. Reconfigure the affected settings after updating.
+  </Accordion>
+
+  <Accordion title="Why won't my Flipper connect to Chrome?">
+    The most common cause is having qFlipper open while trying to connect. You must close qFlipper (and any other open Flipper Lab web pages) before connecting in Chrome. Only one connection to the Flipper can be active at a time.
+  </Accordion>
+
+  <Accordion title="My Flipper isn't working. How do I recover the firmware?">
+    Follow the official [firmware recovery guide](https://docs.flipper.net/basics/firmware-update/firmware-recovery) on docs.flipper.net.
+  </Accordion>
+
+  <Accordion title="My Flipper feels slow or unresponsive">
+    1. Make sure you are using a good-quality microSD card from a known brand. The Flipper communicates with the SD card over SPI, which means some cards that work in other devices may perform poorly here.
+    2. Go to **Settings → System** and verify:
+       ```text
+       Log Level = None
+       Debug = OFF
+       Heap Trace = None
+       ```
+    3. Change any settings that differ from the above.
+    4. Make sure the battery is adequately charged, as low battery can affect performance.
+  </Accordion>
+
+  <Accordion title="My Flipper crashed, is stuck, or frozen">
+    Reboot it by holding the **Left** and **Back** buttons simultaneously.
+  </Accordion>
+
+  <Accordion title="How do I reset a forgotten Flipper pin code?">
+    <Warning>
+      Disconnect the USB cable before starting this procedure.
+    </Warning>
+
+    1. Turn off the device — hold the **Back** button and select **Turn Off**. If you cannot turn it off, proceed to the next step and hold for 30–40 seconds.
+    2. Hold **Up** + **Back** for approximately 5 seconds until the reset screen appears.
+    3. Hold **Right** to confirm the reset. (Hold **Down** to cancel if you do not want to reset.)
+    4. Done. Your user config and pin code are erased to factory defaults. Files on the microSD card are not affected.
+  </Accordion>
+
+  <Accordion title="What are dev builds? Where can I get them?">
+    Dev builds are automatic assemblies of the latest commits from the `dev` branch that have not yet been released as stable. The previous dev build is deleted when a new one is uploaded.
+
+    <Warning>
+      Dev builds are not release-ready. They may contain bugs. If you find issues, report them at [GitHub issues](https://github.com/DarkFlippers/unleashed-firmware/issues).
+    </Warning>
+
+    Dev builds are available at:
+    - [dev.unleashedflip.com](https://dev.unleashedflip.com)
+    - Discord, in the `unleashed-development` channel — [discord.unleashedflip.com](https://discord.unleashedflip.com)
+    - Telegram: [t.me/kotnehleb](https://t.me/kotnehleb)
+  </Accordion>
+
+  <Accordion title="How do I access the CLI or view logs?">
+    <Tabs>
+      <Tab title="Web browser">
+        Works in Chromium-based browsers only (Chrome, Edge, Brave, Opera, Vivaldi).
+
+        1. Connect your Flipper via USB.
+        2. Close qFlipper and any other serial terminals.
+        3. Open [lab.flipper.net/cli](https://lab.flipper.net/cli).
+        4. Click **CONNECT** and select **USB Serial Device** from the list.
+        5. Wait for device details to appear, then select the **CLI** item from the left sidebar.
+      </Tab>
+      <Tab title="Windows (PuTTY)">
+        1. Install [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html) if it is not already installed.
+        2. Connect your Flipper via USB.
+        3. Open qFlipper and note the COM port shown next to the Flipper's name (e.g., `COM3`).
+        4. **Close qFlipper** — it must not be running for the next steps.
+        5. Open PuTTY, select **Serial** under connection type.
+        6. Set the serial line to the COM port number (e.g., `COM3`).
+        7. Set the speed to `115200`.
+        8. Click **Open**.
+
+        If you see "Access Denied", make sure qFlipper is fully closed.
+      </Tab>
+      <Tab title="macOS / Linux">
+        1. Install [GNU Screen](https://www.gnu.org/software/screen/) if it is not already installed.
+        2. Connect your Flipper via USB.
+        3. Open qFlipper to find the device path shown next to the Flipper's name (starts with `/dev/tty`). Alternatively, run `ls /dev/tty.*` in a terminal.
+        4. **Close qFlipper**.
+        5. In a terminal, run:
+           ```bash
+           screen /dev/tty.usbmodemXXXX 115200
+           ```
+           Replace `/dev/tty.usbmodemXXXX` with your actual device path.
+      </Tab>
+      <Tab title="Android">
+        1. Install [Serial USB Terminal](https://play.google.com/store/apps/details?id=de.kai_morich.serial_usb_terminal) from the Play Store.
+        2. Open the app and go to the **Connections** screen via the hamburger menu.
+        3. Connect your Flipper via USB.
+        4. Tap the refresh icon if the Flipper does not appear automatically.
+        5. Allow Serial USB Terminal to access the Flipper if prompted.
+        6. If it does not connect automatically, tap the connect icon (two plugs) in the upper right.
+
+        To exit log mode, disconnect and reconnect using the icon.
+      </Tab>
+    </Tabs>
+
+    Once in the CLI, type `log` and press Enter to start viewing logs. Press `Ctrl-C` or `Cmd-C` to exit log mode.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: Mifare Ultralight">
+    Scan the card, hold the Flipper Zero up to the reader to obtain the password to unlock the remaining sectors, then scan the card again with the unlocked access.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: Mifare DESFire and Mifare Ultralight C">
+    The Flipper Zero has no available attacks for these card types. They cannot be read beyond public data.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: Bank cards">
+    - You cannot clone bank cards.
+    - The Flipper Zero cannot emulate bank cards.
+    - The Flipper Zero cannot act as a point-of-sale terminal.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: Amiibos">
+    Amiibos use `NTAG215` tags. They cannot be written to a Mifare Classic. Currently, you cannot write Amiibo data to new physical blank tags using the Flipper Zero.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: HID / iClass (Picopass)">
+    - iClass cards can be read using the **Picopass** reader plugin.
+    - 26-bit Picopass credentials can be downgraded to H10301 LF RFID format (note: this is not guaranteed to work if the reader is not configured for low-frequency).
+    - Readers must have an LF RFID antenna configured. Some iClass readers are HF-only and cannot be configured for LF.
+    - **Emulation for Picopass** is supported in Unleashed Firmware. The plugin is pre-installed in the `e` build and available via the official Apps Hub.
+    - Write support for personalization mode cards is available through the Picopass app.
+    - For more secure HID cards, the [Seader app](https://github.com/bettse/seader) combined with a [SAM expansion board](https://www.redteamtools.com/nard-sam-expansion-board-for-flipper-zero-with-hid-seos-iclass-sam/) may allow reading and downgrade attacks.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: LF-RFID cloning and blank tags">
+    To clone low-frequency RFID chips you need T5577 tags. True "blank" tags do not exist — all chips the Flipper Zero reads natively are read-only. T5577 chips are multi-emulator tags that the Flipper Zero can program to emulate other low-frequency tag types.
+  </Accordion>
+
+  <Accordion title="NFC & RFID: Unknown card or fob">
+    If you have exhausted NFC, RFID, and Picopass scanning options, gather the following information before asking for help:
+
+    - Photo of the front and back of the credential
+    - Photo of the reader used with it
+    - If the credential is a card, hold it up to a bright light source and photograph the exposed antenna — this helps with identification
+  </Accordion>
+
+  <Accordion title="How do I remove Sub-GHz regional restrictions?">
+    In Unleashed Firmware, all region locks are removed by default. All frequencies supported by the CC1101 chip work without any additional steps.
+
+    If you need to go outside the CC1101's supported frequency range, read the [dangerous settings guide](https://github.com/DarkFlippers/unleashed-firmware/blob/dev/documentation/DangerousSettings.md) first. Transmitting outside the chip's supported range may cause hardware damage.
+  </Accordion>
+
+  <Accordion title="How do I clean .DS_Store and other macOS dot files from my SD card?">
+    Run the following command in Terminal, replacing `Flipper\ SD` with the actual name of your microSD card:
+
+    ```bash
+    sudo dot_clean -mn /Volumes/Flipper\ SD
+    ```
+  </Accordion>
+
+  <Accordion title="How do I sort files on the Flipper microSD card on macOS or Linux?">
+    1. Install `fatsort` via Homebrew (macOS only):
+       ```bash
+       brew install fatsort
+       ```
+    2. Find your SD card disk identifier:
+       ```bash
+       diskutil list
+       ```
+    3. Unmount the SD card:
+       ```bash
+       diskutil unmount /Volumes/Flipper\ SD
+       ```
+    4. Sort the filesystem (replace `disk4s1` with your disk identifier from step 2):
+       ```bash
+       sudo fatsort -n /dev/disk4s1
+       ```
+  </Accordion>
+
+</AccordionGroup>

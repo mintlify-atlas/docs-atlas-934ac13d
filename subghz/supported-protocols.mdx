@@ -1,0 +1,253 @@
+---
+title: "Supported Sub-GHz protocols"
+description: "Every Sub-GHz protocol in Unleashed Firmware — frequencies, modulations, and code types across garage openers, sensors, alarms, and more."
+---
+
+Unleashed Firmware extends the stock protocol list with dozens of additional static and rolling-code decoders. The table below covers the default Sub-GHz app only. Apps such as Weather Station maintain their own separate protocol list.
+
+<Note>
+  `433 MHz` in this list means `433.92 MHz`. `868 MHz` means `868.35 MHz` unless otherwise noted.
+</Note>
+
+## Modulation types
+
+Understanding the modulation column helps you pick the correct preset when reading an unknown remote.
+
+<AccordionGroup>
+  <Accordion title="AM650 (OOK, amplitude shift keying)">
+    The most common modulation for Sub-GHz remotes. The carrier is switched on and off to represent bits. AM650 refers to the 650 µs bandwidth filter used during reception. The vast majority of garage, gate, and alarm remotes use this modulation.
+  </Accordion>
+  <Accordion title="FM / FSK (frequency shift keying)">
+    The carrier frequency shifts between two values to represent 0 and 1. In the Flipper Sub-GHz menu, FSK presets appear as `FM476`, `FM12K`, etc. — the number indicates the frequency deviation in Hz. When a protocol lists `FM`, try each FM preset in **Sub-GHz → Read → Config** until you get a decode. `FSK476` in the protocol list corresponds to `FM476` in the menu.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Garage door and gate openers
+
+Includes boom barriers, roller shutters, and automated gate systems.
+
+| Protocol | Frequency | Modulation | Bits | Type |
+|---|---|---|---|---|
+| Alutech AT-4N | 433.92 MHz | AM650 | 72 | Dynamic |
+| AN-Motors AT4 | 433.92 MHz | AM650 | 64 | Pseudo-Dynamic (KeeLoq) |
+| Ansonic | 433 MHz | FM | 12 | Static |
+| BETT | 433.92 MHz | AM650 | 18 | Static |
+| Beninca ARC (TOGO2VA) | 433.92 MHz | AM650 | 128 | Dynamic (AES128) |
+| BFT Mitto | 433.92 MHz | AM650 | 64 | Dynamic (KeeLoq) |
+| CAME Atomo | 433.92 / 868 MHz | AM650 | 62 | Dynamic |
+| CAME TWEE (+ TOP44FGN) | 433.92 MHz | AM650 | 54 | Pseudo-Dynamic |
+| CAME | 433.92 / 868 MHz | AM650 | 12, 24 | Static |
+| Chamberlain Code | — | AM650 | 10 | Static |
+| Clemsa | — | AM650 | 18 | Static |
+| Dickert MAHS | — | AM650 | 36 | Static |
+| Ditec GOL4 | 433.92 MHz | AM650 | 54 | Dynamic |
+| Doitrand | — | AM650 | 37 | Dynamic |
+| Elplast / P-11B / 3BK / E.C.A | 433 MHz | AM650 | 18 | Static |
+| FAAC SLH (+ Genius KILO TX2/4 JLC) | 433.92 / 868.35 MHz | AM650 | 64 | Dynamic |
+| Gate TX | 433.92 MHz | AM650 | 64 | Static |
+| HCS101 | — | AM650 | 64 | Simple Dynamic (KeeLoq-like) |
+| Hormann | 868 MHz | AM650 | 44 | Static |
+| iDO | 433 MHz | AM650 | 48 | Dynamic (decode only) |
+| KingGates Stylo 4k | 433.92 MHz | AM650 | 89 | Dynamic (KeeLoq) |
+| Linear | 300 MHz | AM650 | 10 | Static |
+| Linear Delta3 | — | AM650 | 8 | Static |
+| Marantec | 433.92 / 868 MHz | AM650 | 49 | Static |
+| Marantec24 | 868 MHz | AM650 | 24 | Static |
+| Mastercode | — | AM650 | 36 | Static |
+| Megacode | — | AM650 | 24 | Static |
+| Nero Radio | 434.42 MHz | AM650 | 56 | Static only |
+| Nero Sketch | — | AM650 | 40 | Static |
+| Nice Flo | 433.92 MHz | AM650 | 12, 24 | Static |
+| Nice FloR-S | 433.92 MHz | AM650 | 52 | Dynamic |
+| Nice One | 433.92 MHz | AM650 | 72 | Dynamic |
+| Nord ICE | 433.92 MHz | AM650 | 33 | Static |
+| Prastel | 433.92 / 868 MHz | AM650 | 25, 42 | Static |
+| Airforce | 433.92 / 868 MHz | AM650 | 18 | Static |
+| Revers RB2 | 433.92 MHz | AM650 | 64 | Static |
+| Roger | 433.92 MHz | AM650 | 28 | Static |
+| Security+ 1.0 | 315 / 433.92 / 390 MHz | AM650 | 42 | Dynamic |
+| Security+ 2.0 | 310 / 390 / 868 MHz | AM650 | 62 | Dynamic |
+| Somfy Keytis (KeyGo 4 RTS / Keytis NS 2RTS) | 433.42 / 868 MHz | AM650 | 80 | Dynamic |
+| V2 Phoenix (Phox) | 433.92 MHz | AM650 | 52 | Dynamic |
+| ZKTeco | 430.5 MHz | AM650 | 24 | Static (Princeton-based) |
+
+---
+
+## Sensors and smart home
+
+Covers lighting controllers, blinds, shutters, doorbells, and security sensors.
+
+| Protocol | Frequency | Modulation | Bits | Type | Notes |
+|---|---|---|---|---|---|
+| Dooya | — | AM650 | 40 | Static | Electric blinds |
+| Feron | 433.92 MHz | AM650 | 32 | Static | RGB LED remotes |
+| Honeywell | — | AM650 | 64 | Static | Alarm / sensor |
+| Honeywell WDB | — | AM650 | 48 | Static | Doorbell |
+| Intertechno V3 | — | AM650 | 32 | Static | Lights, sockets |
+| Jarolift | 433.92 MHz | AM650 | 72 | Dynamic (KeeLoq) | Roller shutters |
+| Legrand | — | AM650 | 18 | Static | Doorbells |
+| Magellan | 433.92 MHz | AM650 | 32 | Static | Sensor / alarm |
+| Power Smart | — | AM650 | 64 | Static | Blinds / shutters |
+| Somfy Telis | 433.92 MHz | AM650 | 56 | Dynamic | |
+
+---
+
+## Alarms
+
+| Protocol | Frequency | Modulation | Bits | Type | Notes |
+|---|---|---|---|---|---|
+| GangQi | 433.92 MHz | AM650 | 34 | Static | Bike alarms |
+| Hollarm | 433.92 MHz | AM650 | 42 | Static | Bike alarms |
+
+---
+
+## Generic and multi-brand remotes
+
+These protocols cover chips used across hundreds of unbranded or OEM remotes.
+
+| Protocol | Frequency | Modulation | Bits | Type |
+|---|---|---|---|---|
+| Hay21 | 433.92 MHz | AM650 | 21 | Dynamic |
+| Holtek | — | AM650 | 40 | Static |
+| Holtek HT12X | — | AM650 | 12 | Static |
+| KeyFinder | 433.92 MHz | AM650 | 24 | Static |
+| Princeton (PT2262, PT\*\*\*\*) | 315 / 433.92 MHz / any | AM650 | 24 | Static |
+| SMC5326 | 315 / 433.92 MHz / any | AM650 | 25 | Static |
+| Treadmill37 (QH-433) | 433.92 MHz | AM650 | 37 | Static |
+
+---
+
+## KeeLoq rolling-code manufacturers
+
+KeeLoq is a proprietary rolling-code encryption system used across the majority of European and some North American gate and garage systems. Unleashed Firmware supports full decode and emulation for the manufacturers below.
+
+<Note>
+  Unless otherwise noted, all KeeLoq entries operate on **433.92 MHz** with **AM650** modulation and carry a **64-bit** packet. The default serial learning type is `simple` with a 10-bit serial part in the Hop field.
+</Note>
+
+### Garage door and gate openers
+
+<AccordionGroup>
+  <Accordion title="Allmatic — 868 MHz, no serial in Hop (magic XOR)">
+    Learning: magic XOR. No serial part in the Hop counter.
+  </Accordion>
+  <Accordion title="Aprimatic — 433.92 MHz, 12-bit serial + 2-bit parity">
+    12-bit serial number in the Hop field, with 2 parity bits replacing the first 2 bits of the serial.
+  </Accordion>
+  <Accordion title="Beninca — 433.92 / 868 MHz, no serial in Hop (magic XOR)">
+    Learning: magic XOR. No serial part in Hop.
+  </Accordion>
+  <Accordion title="CAME Space — 433.92 MHz, 12-bit serial (simple)">
+    12-bit serial part in Hop, simple learning.
+  </Accordion>
+  <Accordion title="Cardin S449 — 433.92 MHz, FSK12K, 12 or 10-bit serial">
+    Uses FSK12K modulation (select FM12K in Flipper). Original remotes use 12-bit serial; some Chinese clones use 10-bit. Receiver reportedly checks 10 bits only (unverified).
+  </Accordion>
+  <Accordion title="Centurion — 433.92 MHz, fixed Hop value 0x1CE (normal learning)">
+    No serial in Hop; uses fixed value `0x1CE`.
+  </Accordion>
+  <Accordion title="Comunello — 433.92 / 868 MHz, normal learning">
+    Standard KeeLoq normal learning.
+  </Accordion>
+  <Accordion title="DEA Mio — 433.92 MHz, modified serial in Hop (simple learning)">
+    Uses a modified serial: the last 3 digits alter the first digit (for example, `419` becomes `C19`).
+  </Accordion>
+  <Accordion title="DoorHan — 315 / 433.92 MHz">
+    Standard KeeLoq, two frequency variants.
+  </Accordion>
+  <Accordion title="DTM Neo — 433.92 MHz, 12-bit serial (simple)">
+    12-bit serial in Hop, simple learning.
+  </Accordion>
+  <Accordion title="Elmes Poland — 303 / 433.92 MHz, normal learning">
+    Operates on 303 MHz or 433.92 MHz.
+  </Accordion>
+  <Accordion title="FAAC RC, XT — 433.92 / 868 MHz, 12-bit serial (normal learning)">
+    12-bit serial in Hop, normal learning.
+  </Accordion>
+  <Accordion title="Genius Bravo (+ Genius ECHO) — 433.92 MHz, 12-bit serial (normal learning)">
+    Button code `0xB` activates programming mode.
+  </Accordion>
+  <Accordion title="Gibidi — 433.92 MHz">
+    Standard KeeLoq.
+  </Accordion>
+  <Accordion title="GSN — 433.92 MHz, 12-bit serial (normal learning)">
+    Standard KeeLoq, 12-bit serial.
+  </Accordion>
+  <Accordion title="Hormann EcoStar — 433.92 MHz, normal learning">
+    Standard KeeLoq normal learning.
+  </Accordion>
+  <Accordion title="IronLogic IL-100 / IL-100 Smart PPult — 433.92 MHz">
+    Standard KeeLoq.
+  </Accordion>
+  <Accordion title="JCM Tech — 433.92 MHz, 8-bit serial (simple learning)">
+    8-bit serial in Hop, simple learning.
+  </Accordion>
+  <Accordion title="Jolly Motors — 433.92 MHz">
+    Standard KeeLoq.
+  </Accordion>
+  <Accordion title="Monarch — 433.92 MHz, fixed Hop value 0x100 (normal learning)">
+    Uses fixed value `0x100` in Hop, no serial.
+  </Accordion>
+  <Accordion title="Motorline — 433.92 MHz, normal learning">
+    Standard KeeLoq normal learning.
+  </Accordion>
+  <Accordion title="Mutanco / Mutancode — 12-bit serial (normal learning)">
+    Standard KeeLoq, 12-bit serial.
+  </Accordion>
+  <Accordion title="Mhouse — 433.92 MHz, 8-bit serial (simple learning)">
+    8-bit serial in Hop, simple learning.
+  </Accordion>
+  <Accordion title="Nice Smilo — 433.92 MHz, 8-bit serial (simple learning)">
+    8-bit serial in Hop, simple learning.
+  </Accordion>
+  <Accordion title="Normstahl / Novoferm — 433.92 MHz">
+    Standard KeeLoq.
+  </Accordion>
+  <Accordion title="Sommer — 434.42 / 868.80 MHz, FSK12K (SOMloq)">
+    Uses FSK12K modulation (select FM12K in Flipper). Supports TX03-868-4, Pearl, and other models using the SOMloq variant.
+  </Accordion>
+  <Accordion title="Steelmate / Stilmatic (R-Tech) — 433.92 MHz, 12-bit serial (normal learning)">
+    Stilmatic: receiver reportedly checks 10 bits only (unverified).
+  </Accordion>
+</AccordionGroup>
+
+### Alarms and unidentified systems
+
+The following KeeLoq manufacturers have been identified through reverse engineering. Frequencies and learning modes vary.
+
+| Manufacturer | Notes |
+|---|---|
+| APS-1100 / APS-2550 | |
+| Alligator / Alligator S-275 | |
+| Cenmax / Cenmax St-5 / Cenmax St-7 | |
+| Faraon | |
+| Guard RF-311A | Normal learning |
+| Harpoon | |
+| KGB / Subaru | Magic serial type 1 |
+| Leopard | |
+| Magic 1–4 | Magic serial types 2 and 3 |
+| Merlin | No serial in Hop, simple XOR |
+| Mongoose | Normal learning |
+| Pantera / Pantera CLK / Pantera XS / Jaguar | |
+| Partisan RX | |
+| Pecinin / Rossi / Rosh | 12-bit serial, simple learning |
+| Reff | |
+| Sheriff | |
+| SL A2-A4 / A6-A9 / B6-B9 | Tomahawk 9010 compatible |
+| Teco | |
+| Tomahawk TZ-9030 / Z, X 3-5 | |
+| Zero_Simple / Zero_Normal / FFFF_Simple / FFFF_Normal | |
+| ZX-730-750-1055 | |
+
+---
+
+## Protocol type reference
+
+| Type | Description | Examples |
+|---|---|---|
+| Static | Fixed code — identical transmission every press | Princeton, Marantec, Nice Flo, Roger |
+| Dynamic (KeeLoq) | Rolling counter encrypted with KeeLoq algorithm | BFT Mitto, DoorHan, Aprimatic, Hormann EcoStar |
+| Dynamic (other) | Rolling counter with manufacturer-specific encoding | CAME Atomo, Nice FloR-S, Somfy Telis, FAAC SLH |
+| Pseudo-Dynamic | Appears rolling but derived from a fixed base | AN-Motors AT4, CAME TWEE |

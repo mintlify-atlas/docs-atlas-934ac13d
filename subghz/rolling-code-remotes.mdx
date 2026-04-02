@@ -1,0 +1,452 @@
+---
+title: "Programming rolling-code remotes"
+description: "How to register your Flipper Zero as a new remote — not a clone — for FAAC SLH, BFT Mitto, CAME Atomo, Nice FloR-S, DoorHan, and other rolling-code systems."
+---
+
+Rolling-code (dynamic-code) remotes use an encrypted counter that changes with every transmission. You cannot simply replay a captured signal — you must register the Flipper as a new remote in the receiver's memory.
+
+<Info>
+  If your system is not listed here, go to **Sub-GHz → Add Manually** and look for your manufacturer. Many systems can also be read directly from **Sub-GHz → Read** without any programming procedure.
+</Info>
+
+<Warning>
+  Only perform these steps on equipment you own or have explicit permission to modify. Registering a new remote to a receiver changes its internal remote list.
+</Warning>
+
+---
+
+## FAAC SLH
+
+FAAC SLH is a 64-bit dynamic protocol used on FAAC barriers and gate openers, also compatible with Genius KILO TX2/4 JLC receivers.
+
+### Method 1: Bind using the receiver's programming button
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → FAAC SLH** and select your frequency (433.92 MHz or 868.35 MHz). A random serial number is generated automatically.
+  </Step>
+  <Step title="Open the receiver box">
+    Locate the programming button on the receiver board inside the housing.
+  </Step>
+  <Step title="Start simultaneous programming">
+    Hold the **Up arrow** button on Flipper to transmit the programming signal. At the same time, press and hold the programming button on the receiver board.
+  </Step>
+  <Step title="Watch the receiver LED">
+    The LED will sequence: on → off → on → off → on. Release both buttons when this sequence completes.
+  </Step>
+  <Step title="Confirm registration">
+    Press **Send** on Flipper a couple of times, holding each press for 1–3 seconds. The receiver should respond.
+  </Step>
+</Steps>
+
+### Method 2: Bind using a master remote (no receiver access needed)
+
+This method extracts the Seed value from your original remote and creates a new remote that registers via the master-remote pairing procedure — no need to open the receiver box.
+
+<Steps>
+  <Step title="Read the seed from your original remote">
+    Go to **Sub-GHz → Read** and set frequency to 868.35 MHz or 433.92 MHz with AM650 modulation. Hold two buttons on the original master remote simultaneously until the LED turns on, then press the single button you want to get the seed from. Open the decoded signal — the **Seed** value is unique per button.
+  </Step>
+  <Step title="Create a manual remote with that seed">
+    Go to **Sub-GHz → Add Manually → FAAC SLH Man. (your frequency)**. Enter the following values, replacing each `R` with any random digit (1–9):
+
+    ```
+    FIX:     A0 RR RR R6
+    COUNTER: 00 00 02
+    SEED:    (seed value from step 1)
+    ```
+  </Step>
+  <Step title="Register the new remote">
+    Press **Send** on Flipper a couple of times near the receiver. The FAAC master-remote pairing procedure will register it.
+  </Step>
+</Steps>
+
+---
+
+## DEA Mio
+
+DEA Mio uses KeeLoq with a modified serial encoding (the last 3 digits of the serial alter the first digit — for example, `419` becomes `C19`).
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → Dea Mio 433 MHz**. A random serial is generated.
+  </Step>
+  <Step title="Open the remote file">
+    Navigate to and open the newly created `.sub` file.
+  </Step>
+  <Step title="Use the programming button simulation">
+    The **Right arrow** button on Flipper simulates the hidden programming button on the original DEA Mio remote. The **Send** button simulates one of the standard action buttons.
+  </Step>
+  <Step title="Follow manufacturer programming instructions">
+    Use the receiver's programming procedure as described in your DEA Mio documentation. Use Flipper's **Right arrow** button where the instructions say to press the hidden button.
+  </Step>
+</Steps>
+
+---
+
+## AN-Motors AT4
+
+<Info>
+  This procedure applies to older receiver boards with a **Learn** button. If your board has buttons labeled **F**, **CL**, **+**, **−** instead, follow the Alutech AT4N procedure below.
+</Info>
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → AN-Motors AT4 433 MHz**.
+  </Step>
+  <Step title="Open the receiver box and press Learn">
+    Find the **Learn** button on the receiver board. Press it once — the LED turns on.
+  </Step>
+  <Step title="First Send press">
+    Press **Send** on Flipper once. The LED on the receiver board turns off.
+  </Step>
+  <Step title="Second Send press">
+    Press **Send** again. The LED begins flashing. Wait a few seconds until it stops.
+  </Step>
+</Steps>
+
+---
+
+## Alutech AT4N
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → Alutech AT4N 433 MHz**.
+  </Step>
+  <Step title="Enter programming mode">
+    On the receiver board, press and hold button **F** for approximately 3 seconds until the display shows `Pr`.
+  </Step>
+  <Step title="Navigate to the Learn menu">
+    Press **F** several times until the display shows `Lr`.
+  </Step>
+  <Step title="Select a free slot">
+    Use **+** and **−** to navigate to a slot with no remote assigned. A red dot in the bottom-right corner indicates a slot is already occupied.
+  </Step>
+  <Step title="Register Flipper">
+    Press **Send** on Flipper once. The display flashes and a red dot appears next to the slot number, confirming registration.
+  </Step>
+  <Step title="Exit programming mode">
+    Press and hold **F** on the receiver board for ~3 seconds to exit.
+  </Step>
+</Steps>
+
+---
+
+## Aprimatic TR
+
+Aprimatic uses KeeLoq with a 12-bit serial and 2-bit parity. Programming requires an already-working remote.
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → KL: Aprimatic 433 MHz**.
+  </Step>
+  <Step title="Trigger programming mode with the existing remote">
+    Press all 4 buttons simultaneously on your already-registered Aprimatic remote. The receiver emits a continuous beep.
+  </Step>
+  <Step title="Register Flipper">
+    Press **Send** on Flipper for approximately 2 seconds.
+  </Step>
+  <Step title="Wait for confirmation">
+    Hold until the receiver stops beeping.
+  </Step>
+</Steps>
+
+---
+
+## DoorHan
+
+DoorHan receivers come in several hardware variants with different button layouts. First determine your frequency, then follow the binding procedure for your board type.
+
+### Determine the frequency
+
+DoorHan receivers use either **315 MHz** or **433.92 MHz**. Create a test remote at one frequency via **Sub-GHz → Add Manually → KL: Doorhan 315 MHz** (or 433 MHz). Press the button and watch the receiver indicator light — if it turns on when you press and off when you release, you have the correct frequency.
+
+### Bind with access to the receiver box
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → KL: Doorhan** at the correct frequency.
+  </Step>
+  <Step title="Enter programming mode — choose your board type">
+
+    <Tabs>
+      <Tab title="4 buttons: Radio, Reverse, Auto, ...">
+        Press and hold **Radio** until the LED lights up.
+      </Tab>
+      <Tab title="4 buttons: R, P, +, − with display">
+        Press **R**, then press **Send** on Flipper twice and wait ~10 seconds.
+      </Tab>
+      <Tab title="4 buttons: +, −, F, TR with display">
+        Press **TR**, then press **Send** on Flipper twice and wait ~10 seconds.
+      </Tab>
+      <Tab title="Universal (any other board)">
+        Press and hold **P** for ~2 seconds until the LED flashes.
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Complete registration">
+    Press **Send** on Flipper twice. The LED turns off, confirming the remote is registered.
+  </Step>
+</Steps>
+
+### Bind using an existing physical remote (no receiver access)
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → KL: Doorhan** at the correct frequency.
+  </Step>
+  <Step title="Trigger pairing on the existing remote">
+    Stand within 1–2 meters of the receiver. On the original remote, press and hold the second (lower) button, then — without releasing it — also press the first (upper) button. Hold both for 1 second, then release. All of these steps must complete within 5 seconds.
+  </Step>
+  <Step title="Confirm with the action button">
+    Press the operating button on the original remote (the one that opens the gate) and hold for 1 second, then release.
+  </Step>
+  <Step title="Register Flipper within 10 seconds">
+    The receiver beeps. Open your new Flipper remote file and press **Send** twice, holding each press for at least 1 second.
+  </Step>
+  <Step title="Confirmation">
+    The receiver beeps again to confirm the new remote is added.
+  </Step>
+</Steps>
+
+### Bind using a Flipper clone of the existing remote
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → KL: Doorhan** at the correct frequency.
+  </Step>
+  <Step title="Open the existing (cloned) remote file on Flipper">
+    Navigate to your previously saved clone of the original remote.
+  </Step>
+  <Step title="Trigger pairing using the clone">
+    Stand within 1–2 meters of the receiver. Press the **Left button** (`0x8`) on Flipper, hold for 1 second and release. Then press the **Right button** (`0xA`), hold for 1 second and release. Then press **Send** (center), hold for 1 second and release. Complete all actions within 5 seconds.
+  </Step>
+  <Step title="Switch to the new remote and register">
+    The receiver beeps. Navigate back to your new Flipper remote file and press **Send** twice (1 second each). The receiver beeps to confirm.
+  </Step>
+</Steps>
+
+---
+
+## Somfy Telis
+
+Somfy Telis uses a 56-bit dynamic protocol on 433.92 MHz. Programming requires an already-registered remote.
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → Somfy Telis 433 MHz**.
+  </Step>
+  <Step title="Trigger programming mode with the registered remote">
+    Long-press the **Prog** button on a remote already registered to the device until the blinds jog up and down briefly.
+  </Step>
+  <Step title="Register Flipper">
+    Press and hold the **Prog** button on Flipper (mapped to the **Left arrow**) until the blinds jog up and down again.
+  </Step>
+</Steps>
+
+---
+
+## BFT Mitto
+
+BFT Mitto uses KeeLoq with a seed derived from the remote's serial number.
+
+### Method 1: Using the original remote
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → BFT Mitto 433 MHz**.
+  </Step>
+  <Step title="Activate the original remote's pairing mode">
+    Stand at least 3 meters from the receiver. On the original BFT remote, press the hidden button on the back with a pin or paperclip, **or** press buttons 1 and 2 simultaneously until the remote's LED lights up.
+  </Step>
+  <Step title="Send the pairing command from the original remote">
+    Momentarily press the button that opens the device on the original remote.
+  </Step>
+  <Step title="Enter pairing mode on Flipper">
+    Long-press the **Right arrow** (`0xF` / Btn:F) on Flipper for 3–5 seconds.
+  </Step>
+  <Step title="Bind the desired button">
+    Press the button on Flipper you want to assign to open the device.
+  </Step>
+  <Step title="Exit pairing mode">
+    Press the **Right arrow** again to exit.
+  </Step>
+</Steps>
+
+### Method 2: Using the receiver board directly
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → BFT Mitto 433 MHz**.
+  </Step>
+  <Step title="Open the receiver box">
+    Access the receiver board and follow its programming procedure.
+  </Step>
+  <Step title="Enter Flipper pairing mode">
+    Long-press **Right arrow** (`0xF`) on Flipper for 3–5 seconds. This simulates holding buttons 1 and 2 simultaneously on the original remote.
+  </Step>
+</Steps>
+
+<Warning>
+  There is a third method that extracts the remote's seed to create a full clone. **Avoid it unless you are replacing a broken remote.** A clone shares the same counter as the original, which will cause the original remote to desync and eventually stop working until its counter re-synchronises. See the BFT documentation for details.
+</Warning>
+
+---
+
+## CAME Atomo
+
+Known product codes: TOP42R, TOP44R, TOP44RGR (806TS-0130). CAME Atomo supports both 433.92 MHz and 868 MHz.
+
+<Warning>
+  When using CAME Atomo from Flipper, always hold **Send** for at least 2 seconds. The protocol transmits only while the button is held — releasing too early sends an incomplete packet.
+</Warning>
+
+### Using an original remote (or a Flipper copy)
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → CAME Atomo 433 MHz** (or 868 MHz).
+  </Step>
+  <Step title="Trigger programming mode with the original remote">
+    Stand at least 3 meters from the receiver. Press and hold the button on the original remote that operates the receiver for about 10 seconds.
+  </Step>
+  <Step title="Register Flipper within 20 seconds">
+    Long-press **Send** on Flipper for 3–4 seconds, then release. This registers the new remote.
+  </Step>
+  <Step title="Verify">
+    After waiting 20 seconds, press and hold **Send** again. The receiver should trigger.
+  </Step>
+</Steps>
+
+### With access to the receiver box
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → CAME Atomo 433 MHz** (or 868 MHz).
+  </Step>
+  <Step title="Enter programming mode on the receiver">
+    Open the receiver box. For multi-channel receivers such as the RE432M/RE862M, each channel is independent — press button **1** or **2** to enter programming mode for the relevant channel.
+  </Step>
+  <Step title="Register Flipper">
+    Long-press **Send** on Flipper for 3–4 seconds, then release.
+  </Step>
+  <Step title="Exit programming mode">
+    Press **CLEAR** once on the receiver board, or wait ~20 seconds for automatic exit.
+  </Step>
+</Steps>
+
+<Note>
+  Only CAME Atomo remotes can be added when programming mode was triggered by another Atomo remote. Static 24/12-bit and CAME TWEE remotes cannot register in this mode.
+</Note>
+
+---
+
+## Nice FloR-S
+
+Nice FloR-S is a 52-bit dynamic protocol on 433.92 MHz.
+
+### Using an existing registered remote
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → Nice FloR-S 433 MHz**.
+  </Step>
+  <Step title="Transmit the registration signal from Flipper">
+    Position yourself within 3 meters of the receiver. Press and hold **Send** on Flipper for at least 5 seconds, then release.
+  </Step>
+  <Step title="Confirm with the original remote (3 times)">
+    Press the button on the already-programmed remote slowly 3 times.
+  </Step>
+  <Step title="Final confirmation from Flipper">
+    Press **Send** on Flipper once slowly, then release.
+  </Step>
+</Steps>
+
+### Programming directly to the receiver
+
+<Steps>
+  <Step title="Create a new remote">
+    Go to **Sub-GHz → Add Manually → Nice FloR-S 433 MHz**.
+  </Step>
+  <Step title="Press the learning button on the receiver">
+    Hold the receiver's learning button for 1–2 seconds. The LED turns on for 5 seconds.
+  </Step>
+  <Step title="Send from Flipper within 5 seconds">
+    Press **Send** on Flipper until the receiver LED turns off, then release.
+  </Step>
+  <Step title="Wait and press again">
+    Wait 2 seconds, then press **Send** again. The receiver LED flashes 3 times to confirm successful programming.
+  </Step>
+  <Step title="Test">
+    Wait 5 seconds, then press **Send** to verify the receiver opens.
+  </Step>
+</Steps>
+
+---
+
+## Counter modes (avoiding desync)
+
+When you clone a rolling-code remote, both Flipper and the original remote share the same counter. If one device transmits, the other falls behind and may need multiple presses to resync — or may be locked out entirely.
+
+Experimental counter modes let you customize how the counter increments, enabling some systems to accept a Flipper clone alongside the original remote without conflict. To enable a counter mode, manually edit the `.sub` file and add a `CounterMode` line at the end.
+
+```text example .sub file with CounterMode
+Filetype: Flipper SubGhz Key File
+Version: 1
+Frequency: 433920000
+Preset: FuriHalSubGhzPresetOok650Async
+Protocol: Nice FloR-S
+Bit: 52
+Key: AA AA AA AA AA AA AA
+CounterMode: 1
+```
+
+<Warning>
+  Counter modes are experimental. Do not use them on equipment you cannot reprogram if something goes wrong. If you are unsure which mode to use, leave `CounterMode` out of the file entirely — the default (+1 increment) works with most systems.
+</Warning>
+
+### Nice FloR-S counter modes
+
+| Mode | Name | Counter sequence | Use case |
+|---|---|---|---|
+| 0 (default) | Standard | +1 per transmission | Regular remote simulation |
+| 1 | floxi2r | `0x0001 / 0xFFFE` | Receiver model floxi2r |
+| 2 | ox2 | `0x0000 / 0x0001` | Receiver model ox2 |
+
+### CAME Atomo counter modes
+
+| Mode | Counter sequence | Notes |
+|---|---|---|
+| 0 (default) | +1 per transmission | Standard |
+| 1 | `0x0000 / 0x0001 / 0xFFFE / 0xFFFF` | CAME RE432 and compatible receivers |
+| 2 | `0x807B / 0x807C / 0x007B / 0x007C` | CAME RE432 and compatible receivers |
+| 3 | Frozen — no increment | Counter freeze |
+
+### Alutech AT-4N counter modes
+
+| Mode | Counter sequence | Notes |
+|---|---|---|
+| 0 (default) | +1 per transmission | Standard |
+| 1 | `0x0000 / 0x0001 / 0xFFFE / 0xFFFF` | Receiver model MCSW-3.3M |
+| 2 | `0x0000 / 0x0001 / 0x0002 / 0x0003 / 0x0004 / 0x0005` | Other receiver boards |
+
+### KeeLoq counter modes
+
+| Mode | Counter sequence | Notes |
+|---|---|---|
+| 0 (default) | +1 per transmission | Standard |
+| 1 | `0x0000 / 0x0001 / 0xFFFE / 0xFFFF` | Experimental — may work with some systems |
+| 2 | +0x3333 per transmission | May work with DoorHan; seen in universal remotes |
+| 3 | `0x8006 / 0x8007 / 0x0006 / 0x0007` | May work with Hormann EcoStar |
+| 4 | `0x807B / 0x807C / 0x007B / 0x007C` | May work with Nice Smilo |
+| 5 | `0x0000 / 0xFFFF` | Alternates min/max |
+| 6 | Frozen — no increment | Counter freeze |
+| 7 | +0x3333 × 5, then +1 × 2 (7 signals total) | DoorHan burst — wait for full transmission |
+
+### V2 Phoenix (Phox) counter modes
+
+| Mode | Name | Counter sequence | Notes |
+|---|---|---|---|
+| 0 (default) | Standard | +1 per transmission | |
+| 1 | ofex like | `0x0000 / 0x0001 / 0xFFFE / 0xFFFF` | Verified working |
+| 2 | 0–4 | `0x0000 / 0x0001 / 0x0002 / 0x0003 / 0x0004` | Experimental |

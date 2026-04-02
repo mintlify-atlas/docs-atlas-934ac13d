@@ -1,0 +1,136 @@
+---
+title: "Infrared"
+description: "Universal remotes for TV, projectors, fans, ACs, and audio devices. RCA protocol support, external IR modules, and how to capture signals."
+---
+
+Unleashed Firmware ships with expanded infrared universal remotes, adds the RCA protocol, and supports external IR modules. The universal remote library is continuously updated and verified by the Unleashed team.
+
+## Universal remotes
+
+Unleashed includes universal remote files for five device categories. These are pre-loaded on the device and accessible from **Infrared → Universal Remotes**.
+
+<CardGroup cols={2}>
+  <Card title="TVs" icon="tv">
+    Recompiled universal TV remote with all buttons: `Power`, `Mute`, `Vol_up`, `Vol_dn`, `Ch_next`, `Ch_prev`.
+  </Card>
+  <Card title="Projectors" icon="projector">
+    Universal projector remote: `Power`, `Mute`, `Vol_up`, `Vol_dn`.
+  </Card>
+  <Card title="Fans" icon="fan">
+    Universal fan remote, verified and updated by the Unleashed team.
+  </Card>
+  <Card title="Air conditioners" icon="snowflake">
+    Universal A/C remote with mode signals: `Off`, `Dh`, `Cool_hi`, `Cool_lo`, `Heat_hi`, `Heat_lo`.
+  </Card>
+  <Card title="Audio / soundbars" icon="volume-high">
+    Universal audio remote: `Power`, `Play`, `Pause`, `Vol_up`, `Vol_dn`, `Next`, `Prev`, `Mute`.
+  </Card>
+</CardGroup>
+
+## RCA protocol
+
+Unleashed adds support for the **RCA infrared protocol**, which is used by a range of televisions and home theater equipment. The official firmware does not include this protocol.
+
+## External IR modules
+
+Unleashed Firmware supports **external infrared transmitter/receiver modules** connected to the GPIO header. The firmware auto-detects the external module using the same mechanism as the official firmware, allowing longer-range IR transmission and reception beyond what the built-in hardware provides.
+
+## Capturing IR signals
+
+You can contribute your device's signals to the universal remote library, or create a personal remote file, by capturing IR signals from the original remote.
+
+### Standard devices (TVs, audio, projectors, fans)
+
+<Steps>
+  <Step title="Point the remote at the Flipper">
+    Hold the original remote so it faces Flipper's IR receiver (the small black window on the top edge).
+  </Step>
+  <Step title="Start learning">
+    In the Infrared app, start learning a new remote for the first button. For subsequent buttons, press **+** to add a button to the existing file.
+  </Step>
+  <Step title="Press the button quickly">
+    Do a **quick press** — do not hold the button down. Holding the button produces long captures with repeat frames, which slow down playback when the signal is sent from the Flipper.
+  </Step>
+  <Step title="Save with the correct name">
+    Save the signal using the standard name for that button (for example, `Power`, `Vol_up`, `Mute`). The names are case-sensitive.
+  </Step>
+  <Step title="Repeat for each button">
+    Repeat steps 2–4 until all buttons for the device are captured.
+  </Step>
+  <Step title="Verify every signal">
+    Test each captured signal against the actual device to confirm it works before saving the final file.
+  </Step>
+</Steps>
+
+<Note>
+  If you receive a raw capture instead of a parsed code, press **Retry** a few times. Interference from nearby devices can cause the Flipper to fall back to raw mode. Parsed captures (with a recognized protocol name) are preferable — they are smaller and replay more reliably.
+</Note>
+
+### Parsed vs. raw captures
+
+<Tabs>
+  <Tab title="Parsed">
+    A parsed capture means Flipper recognized the protocol. This is the cleanest format.
+
+    ```text parsed example
+    name: Power
+    type: parsed
+    protocol: NEC
+    address: 07 00 00 00
+    command: 02 00 00 00
+    ```
+  </Tab>
+  <Tab title="Raw">
+    Raw captures store the actual pulse timings. Keep captures short by pressing the button quickly — aim for around 100 samples.
+
+    ```text raw example
+    name: Power
+    type: raw
+    frequency: 38000
+    duty_cycle: 0.330000
+    data: 2410 597 1189 599 592 600 1186 602 589 603 ...
+    ```
+  </Tab>
+</Tabs>
+
+### Air conditioners
+
+Air conditioners work differently from other IR devices. The A/C remote tracks state internally — when you press a button, the remote transmits the full current state (mode, temperature, fan speed) as a single packet. Each signal must be captured in a specific way.
+
+<Steps>
+  <Step title="Turn the A/C on">
+    Press the **Power** button on the original remote so the display shows the A/C is ON.
+  </Step>
+  <Step title="Set the mode and temperature">
+    Set the A/C to the mode and temperature listed in the table below. Leave fan speed and vane on **Auto** if available.
+  </Step>
+  <Step title="Turn the A/C off">
+    Press **Power** to switch the A/C off via the remote.
+  </Step>
+  <Step title="Start learning on Flipper">
+    In the Infrared app, start learning a new signal (or press **+** to add to an existing file).
+  </Step>
+  <Step title="Capture the signal">
+    Point the remote at Flipper's IR receiver and press **Power** once to turn the A/C on. Save the resulting signal under the name from the table.
+  </Step>
+  <Step title="Repeat for each signal">
+    Repeat steps 1–5 for each of the five mode signals below.
+  </Step>
+</Steps>
+
+| Signal | Mode | Temperature | Notes |
+|:---:|:---:|:---:|---|
+| `Dh` | Dehumidify | N/A | |
+| `Cool_hi` | Cooling | Lowest available | |
+| `Cool_lo` | Cooling | 23°C | |
+| `Heat_hi` | Heating | Highest available | |
+| `Heat_lo` | Heating | 23°C | |
+
+After capturing the five mode signals, capture the `Off` signal:
+
+1. Make sure the A/C display shows it is ON.
+2. Start learning a new signal on Flipper and point the remote at the IR receiver.
+3. Press **Power** so the remote switches the A/C off.
+4. Save the signal as `Off`.
+
+Test all six signals against the device before finalizing the file.

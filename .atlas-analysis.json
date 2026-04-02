@@ -1,24 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Flipper Zero Unleashed Firmware",
+  "projectType": "general",
+  "projectName": "Flipper Zero Unleashed Firmware",
+  "projectDescription": "A feature-rich, community-driven custom firmware fork for Flipper Zero that removes regional restrictions, adds new Sub-GHz protocols, NFC parsers, and quality-of-life improvements while maintaining full API compatibility.",
   "theme": "aspen",
-  "colors": {
-    "primary": "#ca1a22",
-    "light": "#70181a",
-    "dark": "#262525"
-  },
-  "favicon": "https://media.brand.dev/463dc527-8ba8-45f9-a4c6-0185785b72e9.png",
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/DarkFlippers/unleashed-firmware"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/DarkFlippers/unleashed-firmware"
-    }
-  },
+  "primaryColor": "#ca1a22",
+  "lightColor": "#70181a",
+  "darkColor": "#262525",
   "navigation": {
     "tabs": [
       {
@@ -99,5 +86,31 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Sub-GHz region lock removal and extended frequency support",
+    "Rolling code protocol support (KeeLoq, FAAC SLH, BFT Mitto, Nice FlorS, etc.)",
+    "Enhanced NFC with custom parsers for transit cards and EMV",
+    "BadUSB/BadKB (BadUSB over Bluetooth) with keyboard layout support",
+    "JavaScript scripting engine for building apps without C compilation",
+    "FAP (Flipper App Package) system for SD card apps",
+    "Customizable desktop, clock display, battery percentage styles",
+    "External CC1101 radio module support",
+    "Universal IR remotes for TV, AC, projectors, fans, and audio",
+    "GPIO expansion module protocol for third-party hardware"
+  ],
+  "publicApiSurface": [
+    "fbt - Flipper Build Tool CLI (./fbt <target>)",
+    "ufbt - Micro Flipper Build Tool for single app development",
+    "FlipperAppType enum (SERVICE, APP, PLUGIN, EXTERNAL, etc.)",
+    "application.fam manifest (App() function with appid, apptype, entry_point, etc.)",
+    "FAP API versioning via api_symbols.csv",
+    "JavaScript SDK modules: badusb, gpio, gui, math, notification, serial, storage",
+    "Expansion Module Protocol (serial frame-based over GPIO UART)",
+    "Sub-GHz file formats (.sub files)",
+    "NFC file formats (.nfc files)",
+    "IR file formats (.ir files)",
+    "BadUSB script format (.txt scripts)",
+    "LF RFID file format (.rfid files)"
+  ]
 }

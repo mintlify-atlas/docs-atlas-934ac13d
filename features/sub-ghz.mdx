@@ -1,0 +1,130 @@
+---
+title: "Sub-GHz"
+description: "Unlocked frequencies, 60+ protocols, rolling code support, external CC1101 module, and Sub-GHz apps included in Unleashed Firmware."
+---
+
+<Warning>
+  Sub-GHz transmission is regulated by law in most countries. Only transmit on frequencies and with devices you are legally authorized to use. Unleashed Firmware removes the regional lock for experimental and educational purposes — use responsibly.
+</Warning>
+
+Unleashed Firmware removes the regional transmission restrictions imposed by the official firmware, unlocks an extended frequency list, and adds support for over 60 Sub-GHz protocols — including rolling code systems from dozens of manufacturers.
+
+## Unlocked frequencies
+
+The official firmware restricts Sub-GHz transmission to a narrow regional band. Unleashed removes this restriction entirely, allowing you to transmit on any frequency within the CC1101 hardware range:
+
+- **300–348 MHz**
+- **386–464 MHz**
+- **778–928 MHz**
+
+350 MHz and 467 MHz are also included in the default frequency list. You can add custom frequencies by editing `subghz/assets/setting_user` on your SD card. See [frequency settings](/subghz/frequency-settings) for details.
+
+<Note>
+  The CC1101 hardware operates within defined specs. Transmitting outside those specs using `dangerous_settings` can damage your hardware. See [extending the frequency range](/subghz/frequency-settings) for the exact warning.
+</Note>
+
+## Supported protocol types
+
+<CardGroup cols={3}>
+  <Card title="Static code" icon="lock">
+    Fixed transmission codes. Examples: Princeton (PT2262), Roger, Marantec, Nice Flo, CAME, Hormann, Linear.
+  </Card>
+  <Card title="Rolling code (KeeLoq)" icon="rotate">
+    Dynamic codes using KeeLoq encryption. 60+ manufacturer systems supported including DoorHan, BFT Mitto, FAAC SLH, Aprimatic, and more.
+  </Card>
+  <Card title="Rolling code (other)" icon="shuffle">
+    Custom dynamic encodings: CAME Atomo, Nice FloR-S, Somfy Telis, Alutech AT-4N, Security+ 1.0/2.0, and others.
+  </Card>
+</CardGroup>
+
+See the [full protocol list](/subghz/supported-protocols) for every supported system with frequencies and modulation types.
+
+## App improvements
+
+### Frequency analyzer
+
+The frequency analyzer has been rewritten with a new UI. Press **OK** while the analyzer is active to use the detected frequency in Read modes. Long-press **OK** to switch directly to the Read menu.
+
+### Save last settings
+
+The Sub-GHz app remembers your last used settings across restarts — frequency, modulation, and other configuration options persist between sessions.
+
+### Protocol names in filenames
+
+Enable `Radio Settings → Protocol Names = ON` to save captured signal files with a timestamp and protocol name instead of a random name or timestamp only.
+
+### Custom button codes
+
+For supported rolling code protocols, the arrow buttons send the signal with a different button code — useful when a receiver expects a specific button:
+
+| Protocol | Programming button |
+|---|---|
+| BFT Mitto | Button code `0xF` |
+| Somfy Telis | Button `0x8` (Prog) |
+| Nice FloR-S | Right arrow button |
+| CAME Atomo | Right arrow button |
+| Keeloq / Alutech AT4N / Security+ 2.0 | Arrow buttons |
+
+### Manual remote creation
+
+The **Add manually** menu includes support for:
+
+- **FAAC SLH** (433.92 MHz and 868.35 MHz) — program a new remote into the receiver
+- **BFT Mitto** — KeeLoq secure with seed; use button code `0xF`
+- **Somfy Telis**, **Nice FloR-S**, **CAME Atomo** — manual creation with receiver programming
+
+### Ignore filters
+
+Signal types you can optionally filter out from the receiver list:
+
+- **Alarms**: Hollarm, GangQi
+- **Sensors**: Magellan, Honeywell Sec, Honeywell WDB (doorbells), Legrand (doorbells), Feron (RGB lights)
+- **ReversRB2**: Revers RB-2(M) protocol
+- **NiceFlorS**: Nice FloR-S protocol
+
+## External CC1101 module
+
+Unleashed Firmware supports an external CC1101 radio module connected via hardware SPI on the GPIO header. This allows use of a higher-gain external antenna for improved range.
+
+Amplifier control (or LED control) for the external module is enabled by default.
+
+Wiring and hardware details: [github.com/quen0n/flipperzero-ext-cc1101](https://github.com/quen0n/flipperzero-ext-cc1101)
+
+## Sub-GHz apps
+
+### Sub-GHz Bruteforce
+
+A static code brute-force plugin included with Unleashed Firmware.
+
+<AccordionGroup>
+  <Accordion title="How it works">
+    - Select a protocol from the preconfigured list, or load your own `.sub` file and choose which bytes to brute-force.
+    - Configure the time delay between signals by holding **Up** on the main screen (also saves the setting).
+    - Adjust the number of repeats per signal by pressing **Right** on a protocol in the list.
+  </Accordion>
+</AccordionGroup>
+
+### Sub-GHz Remote
+
+A remote control app that maps up to five Sub-GHz signal files to the five directional buttons (Up, Down, Left, Right, OK).
+
+Use the built-in constructor on the Flipper to create a map, or create a config file manually. The map file uses `.txt` extension and lives in `subghz_remote/` on the SD card:
+
+```text example.txt
+UP: /ext/subghz/Fan1.sub
+DOWN: /ext/subghz/Fan2.sub
+LEFT: /ext/subghz/Door.sub
+RIGHT: /ext/subghz/Garage3.sub
+OK: /ext/subghz/Garage3l.sub
+ULABEL: Fan ON
+DLABEL: Fan OFF
+LLABEL: Doorbell
+RLABEL: Garage OPEN
+OKLABEL: Garage CLOSE
+```
+
+<Note>
+  File paths must not contain spaces or special characters (hyphens and underscores are allowed). Labels are limited to 16 characters.
+</Note>
+
+See [Sub-GHz Remote app](/subghz/remote-app) for the full configuration reference.

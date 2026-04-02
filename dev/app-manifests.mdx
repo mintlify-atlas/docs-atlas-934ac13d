@@ -1,0 +1,292 @@
+---
+title: 'App manifests'
+description: 'Reference for application.fam manifest files — the build system descriptors that define every app, service, and plugin in Flipper Zero firmware.'
+---
+
+Every component in the Flipper Zero firmware — system services, user-facing apps, plugins, and settings screens — is described by a manifest file named `application.fam`. When you run a build, `fbt` collects all manifests, resolves dependencies, and builds only the components required by the active build configuration.
+
+## What a .fam file is
+
+A `.fam` file is a Python snippet that calls the `App()` function one or more times. Each call defines one firmware component and its relationship to the rest of the system.
+
+Only two parameters are mandatory: `appid` and `apptype`. Everything else is optional and may only apply to certain app types.
+
+```python application.fam
+App(
+    appid="my_app",
+    apptype=FlipperAppType.EXTERNAL,
+    name="My App",
+    entry_point="my_app_main",
+    fap_version="1.0",
+    fap_category="Misc",
+    fap_description="A minimal external app example.",
+)
+```
+
+A single `.fam` file may contain multiple `App()` definitions. This is common for components that register both a startup hook and a settings screen.
+
+---
+
+## App() parameters
+
+### Required parameters
+
+<ParamField path="appid" type="string" required>
+  Unique identifier for the app within the build system. Used to specify which apps to include in the build configuration and to resolve dependencies and conflicts between components.
+</ParamField>
+
+<ParamField path="apptype" type="FlipperAppType" required>
+  The firmware component type. Controls where and how the app is started. Must be one of the `FlipperAppType` enum values.
+
+  | Value | Description |
+  |---|---|
+  | `FlipperAppType.SERVICE` | System service, created at early startup |
+  | `FlipperAppType.SYSTEM` | Not shown in any menus; started by other apps or from the CLI |
+  | `FlipperAppType.APP` | Regular app shown in the main menu |
+  | `FlipperAppType.PLUGIN` | Built as part of the firmware and placed in the Plugins menu |
+  | `FlipperAppType.DEBUG` | Only visible in the Debug menu when debug mode is enabled |
+  | `FlipperAppType.ARCHIVE` | The one and only Archive app |
+  | `FlipperAppType.SETTINGS` | Placed in the system settings menu |
+  | `FlipperAppType.STARTUP` | A callback run at system startup; does not define a separate app |
+  | `FlipperAppType.EXTERNAL` | Built as a `.fap` file for loading from the SD card |
+  | `FlipperAppType.METAPACKAGE` | No code; used to declare dependency bundles |
+</ParamField>
+
+### Common parameters
+
+<ParamField path="name" type="string">
+  Display name shown in menus and the app launcher.
+</ParamField>
+
+<ParamField path="entry_point" type="string">
+  Name of the C function to use as the app's entry point. C++ function names are mangled, so wrap them in `extern "C"` before referencing them here.
+</ParamField>
+
+<ParamField path="flags" type="list">
+  Internal flags for system apps. Do not use in user or external apps.
+</ParamField>
+
+<ParamField path="cdefines" type="list">
+  C preprocessor definitions to declare globally when this app is included in the active build configuration. For external apps (`EXTERNAL` type), these definitions are applied when building the app itself.
+</ParamField>
+
+<ParamField path="requires" type="list">
+  App IDs that must also be included in the build configuration whenever this app is referenced. Equivalent to `provides`.
+</ParamField>
+
+<ParamField path="conflicts" type="list">
+  App IDs that cannot coexist with this app. If any are found in the constructed app list, `fbt` aborts the build.
+</ParamField>
+
+<ParamField path="provides" type="list">
+  Functionally identical to `requires`. Lists app IDs that must be included alongside this one.
+</ParamField>
+
+<ParamField path="stack_size" type="number" default="2048">
+  Stack size in bytes to allocate for this app at startup. Too small a stack causes a crash from stack overflow. Too large reduces available heap for the rest of the system. Use the `top` and `free` CLI commands to profile memory usage.
+</ParamField>
+
+<ParamField path="icon" type="string">
+  Animated icon name from the built-in asset library. Used when the app is built as part of the firmware (not as a FAP).
+</ParamField>
+
+<ParamField path="order" type="number">
+  Sort order within the app's menu group. Lower values appear closer to the top. Also controls the ordering of startup hooks.
+</ParamField>
+
+<ParamField path="sdk_headers" type="list">
+  C header files from this app's source tree to include in the API definitions exposed to external apps.
+</ParamField>
+
+<ParamField path="targets" type="list" default='["all"]'>
+  Hardware target names this app is compatible with. Omitting this field (or setting it to `["all"]`) builds for every target.
+</ParamField>
+
+<ParamField path="resources" type="string" default='""'>
+  Name of a subfolder within the app's source folder to package as SD card resources. The folder is only included if the app is part of the active build configuration. An empty string means no resources are packaged.
+</ParamField>
+
+---
+
+## External app (FAP) parameters
+
+The following parameters apply only to apps with `apptype=FlipperAppType.EXTERNAL`. See [FAP apps](/dev/fap-apps) for the full build workflow.
+
+<ParamField path="sources" type="list" default='["*.c*"]'>
+  Filename masks used to gather source files from the app folder. The default includes C and C++ files. Prefix a mask with `"!"` to exclude it. Paths without wildcards are treated as literal paths.
+
+  Examples:
+  - `["*.c*", "!plugins"]` — all C/C++ files except those in the `plugins/` subfolder
+  - `["*.c*", "!legacy.c"]` — exclude a specific file by literal path
+</ParamField>
+
+<ParamField path="fap_version" type="string" default='"0.1"'>
+  App version string. Can be a string like `"1.2"` or a tuple like `(1, 2)`. Only the major and minor version numbers are stored in the built `.fap` file.
+</ParamField>
+
+<ParamField path="fap_icon" type="string">
+  Path to a `.png` file to embed in the `.fap` file as the app icon. Must be 1-bit color depth at 10×10 pixels.
+</ParamField>
+
+<ParamField path="fap_libs" type="list">
+  Extra system libraries to link against. Provides access to functions not exported by the main firmware API, at the cost of increased `.fap` size and RAM usage.
+</ParamField>
+
+<ParamField path="fap_category" type="string">
+  App subcategory. Also determines the directory path within the `apps/` folder on the SD card.
+</ParamField>
+
+<ParamField path="fap_description" type="string">
+  Short description of what the app does.
+</ParamField>
+
+<ParamField path="fap_author" type="string">
+  App author name.
+</ParamField>
+
+<ParamField path="fap_weburl" type="string">
+  URL to the app's homepage or repository.
+</ParamField>
+
+<ParamField path="fap_icon_assets" type="string">
+  Folder name containing image assets for this app. Images in this folder are preprocessed and compiled alongside the app. Reference them via `#include "{APPID}_icons.h"` in your source code.
+</ParamField>
+
+<ParamField path="fap_extbuild" type="list">
+  Enables parts of the app to be built by external tools. Contains a list of `ExtFile(path="...", command="...")` definitions. `fbt` runs the specified shell command for each entry.
+
+  Two pattern variables are available:
+  - `${FAP_WORK_DIR}` — the app's temporary build folder
+  - `${FAP_SRC_DIR}` — the app's source folder
+
+  Commands run from the firmware root directory. All intermediate files must be placed in `${FAP_WORK_DIR}`.
+</ParamField>
+
+<ParamField path="fal_embedded" type="boolean" default="False">
+  Applies only to `PLUGIN` type apps. When `True`, the plugin is embedded into the host app's `.fap` file as a resource and extracted to `apps_assets/APPID/` on first run. Use this to distribute plugins bundled inside a host app.
+</ParamField>
+
+---
+
+## Private libraries (fap_private_libs)
+
+<ParamField path="fap_private_libs" type="list">
+  Additional libraries distributed as source code alongside the app. Each entry is a call to `Lib()`. Library sources must live in a subfolder of the `lib/` directory inside the app's source folder.
+</ParamField>
+
+### Lib() parameters
+
+<ParamField path="name" type="string" required>
+  Name of the library's subfolder under `lib/`.
+</ParamField>
+
+<ParamField path="fap_include_paths" type="list" default='["."]'>
+  Paths relative to the library's source root to add to the parent app's include path.
+</ParamField>
+
+<ParamField path="sources" type="list" default='["*.c*"]'>
+  Filename masks for gathering source files within the library's source root.
+</ParamField>
+
+<ParamField path="cflags" type="list" default="[]">
+  Additional compiler flags for building this library. Useful for suppressing warnings in third-party code (e.g., `["-Wno-error"]`).
+</ParamField>
+
+<ParamField path="cdefines" type="list" default="[]">
+  Additional preprocessor definitions for building this library.
+</ParamField>
+
+<ParamField path="cincludes" type="list" default="[]">
+  Additional include paths for building this library. Paths are relative to the app root. Use this to provide external header search paths such as configuration headers.
+</ParamField>
+
+---
+
+## Examples
+
+### Startup hook and settings screen
+
+A single `.fam` file defining two components: a startup hook that runs before the UI is ready, and a settings screen that appears in the system menu.
+
+This is taken from `applications/services/bt/application.fam`:
+
+```python application.fam
+App(
+    appid="bt_start",
+    apptype=FlipperAppType.STARTUP,
+    entry_point="bt_on_system_start",
+    order=70,
+)
+
+App(
+    appid="bt_settings",
+    name="Bluetooth",
+    apptype=FlipperAppType.SETTINGS,
+    entry_point="bt_settings_app",
+    stack_size=1 * 1024,
+    requires=[
+        "bt",
+        "gui",
+    ],
+    order=10,
+)
+```
+
+### Private libraries: mbedtls and loclass
+
+An external app that bundles two third-party C libraries from its `lib/` folder. `fbt` builds each as a static library and links both into the final `.fap`.
+
+```python application.fam
+App(
+    appid="mf_classic_tool",
+    apptype=FlipperAppType.EXTERNAL,
+    name="MF Classic Tool",
+    entry_point="mf_classic_tool_app",
+    fap_version="1.0",
+    fap_category="NFC",
+    fap_private_libs=[
+        Lib(
+            name="mbedtls",
+            fap_include_paths=["include"],
+            sources=[
+                "library/des.c",
+                "library/sha1.c",
+                "library/platform_util.c",
+            ],
+            cdefines=["MBEDTLS_ERROR_C"],
+        ),
+        Lib(
+            name="loclass",
+            cflags=["-Wno-error"],
+        ),
+    ],
+)
+```
+
+For `mbedtls`: only the three listed source files are compiled, `lib/mbedtls/include` is added to the include path, and `MBEDTLS_ERROR_C` is defined for that library's sources.
+
+For `loclass`: all sources in `lib/loclass/` are compiled, and compiler warnings are not treated as errors — useful when integrating large third-party codebases.
+
+### Building from Rust sources (fap_extbuild)
+
+An external app whose core logic is compiled from Rust. `fbt` invokes Cargo to produce a static library, then links it into the `.fap`.
+
+```python application.fam
+App(
+    appid="hello_rust",
+    apptype=FlipperAppType.EXTERNAL,
+    name="Hello Rust",
+    entry_point="hello_rust_main",
+    sources=["target/thumbv7em-none-eabihf/release/libhello_rust.a"],
+    fap_extbuild=(
+        ExtFile(
+            path="${FAP_WORK_DIR}/target/thumbv7em-none-eabihf/release/libhello_rust.a",
+            command="cargo build --release --verbose --target thumbv7em-none-eabihf --target-dir ${FAP_WORK_DIR}/target --manifest-path ${FAP_SRC_DIR}/Cargo.toml",
+        ),
+    ),
+)
+```
+
+<Note>
+  The Cargo command runs from the firmware root. Intermediate build artifacts must go into `${FAP_WORK_DIR}` to avoid polluting the source tree.
+</Note>

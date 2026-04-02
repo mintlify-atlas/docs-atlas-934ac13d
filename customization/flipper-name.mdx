@@ -1,0 +1,60 @@
+---
+title: "Flipper name"
+description: "Change or reset the Flipper Zero device name shown in device info, the passport screen, and over Bluetooth."
+---
+
+Unleashed Firmware lets you set a custom name for your Flipper Zero. The name is stored on the microSD card and persists across firmware updates.
+
+## Change the device name
+
+<Steps>
+  <Step title="Open Desktop settings">
+    On your Flipper Zero, navigate to **Settings → Desktop → Change Flipper Name**.
+  </Step>
+  <Step title="Enter a new name">
+    Use the on-screen keyboard to type your new name, then press **Save**.
+  </Step>
+  <Step title="Wait for reboot">
+    You will see a `Name is set!` confirmation. When you exit Settings, the Flipper automatically reboots.
+  </Step>
+  <Step title="Confirm the name">
+    After rebooting, your new name appears in **Device Info** and on the right-side **Passport** screen.
+  </Step>
+</Steps>
+
+## Reset the name to default
+
+<Steps>
+  <Step title="Open Desktop settings">
+    Navigate to **Settings → Desktop → Change Flipper Name**.
+  </Step>
+  <Step title="Save without entering a name">
+    Leave the name field empty and press **Save**.
+  </Step>
+  <Step title="Wait for reboot">
+    Exit Settings. The Flipper reboots and the name reverts to its original factory default.
+  </Step>
+</Steps>
+
+## Reconnect Bluetooth after a name change
+
+Changing the device name affects how the Flipper advertises itself over Bluetooth. Your phone will no longer recognize the previous pairing.
+
+<Note>
+  After renaming your Flipper, you must forget the old pairing on both your phone and the Flipper itself before re-pairing.
+</Note>
+
+<Steps>
+  <Step title="Forget the device in the mobile app">
+    In the Flipper mobile app, select **Forget Flipper**.
+  </Step>
+  <Step title="Remove the pairing from your phone">
+    Open your phone's **Settings → Bluetooth**, find the Flipper in the device list, open its options, and select **Forget device**.
+  </Step>
+  <Step title="Forget devices on the Flipper">
+    On the Flipper, go to **Settings → Bluetooth → Forget all devices** and confirm.
+  </Step>
+  <Step title="Re-pair">
+    Make sure Bluetooth is **ON** on the Flipper, then open the mobile app and pair again from scratch.
+  </Step>
+</Steps>

@@ -1,0 +1,261 @@
+---
+title: "JavaScript SDK overview"
+description: "Learn how the mJS-based JavaScript engine works on Flipper Zero: capabilities, built-in functions, data types, the event loop, and how to load modules."
+---
+
+Flipper Zero firmware includes a built-in scripting engine that runs JavaScript. You can write script files, share them with others, and launch them directly from the **Apps → Scripts** menu — no compiler or PC required after initial transfer.
+
+JavaScript support is based on the [mJS scripting engine](https://github.com/cesanta/mjs), originally designed for microcontrollers. mJS requires less than 50 KB of flash space and 2 KB of RAM. Scripts run directly on the Flipper Zero hardware and can interact with the device's GUI, buttons, USB-HID, GPIO, UART interfaces, and more.
+
+<Warning>
+  mJS has limitations compared to JavaScript engines in modern browsers. Notably, closures (anonymous functions that capture values from outer scope) are not supported. Use extra arguments passed through `subscribe()` or callbacks to share state between functions.
+</Warning>
+
+## Where scripts live and how to run them
+
+Store your scripts on the microSD card at `SD Card/apps/Scripts/` (internal path: `/ext/apps/Scripts/`).
+
+You can run a script in two ways:
+
+- **From the device menu**: Go to **Apps → Scripts**, select your script, and press **OK**.
+- **Via CLI**: Connect Flipper Zero over USB, open a serial terminal, and run:
+
+```bash
+js /ext/apps/Scripts/your_script.js
+```
+
+<Note>
+  When running via CLI, all output from `print()` goes to the terminal instead of the device screen. This makes the CLI useful for debugging.
+</Note>
+
+---
+
+## Data types
+
+mJS supports the following data types:
+
+| Type          | Description                                                      |
+|---------------|------------------------------------------------------------------|
+| `string`      | Sequence of single-byte ASCII characters. No UTF-8 support.      |
+| `number`      | Numeric values (integer and floating point).                     |
+| `boolean`     | `true` or `false`.                                               |
+| `foreign`     | A C function or data pointer from the native firmware.           |
+| `undefined`   | Absence of a value.                                              |
+| `null`        | Explicit empty value.                                            |
+| `Object`      | Data structure with named fields.                                |
+| `Array`       | A special object where all items are indexed and of equal type.  |
+| `ArrayBuffer` | A raw binary data buffer.                                        |
+| `DataView`    | Interface for reading and writing into an `ArrayBuffer`.         |
+
+---
+
+## Built-in functions
+
+These functions are available globally without importing any module.
+
+<AccordionGroup>
+  <Accordion title="print()">
+    Prints a message to the screen console (or CLI if running via serial).
+
+    Accepts `string`, `number`, `boolean`, and `undefined` arguments.
+
+    ```javascript
+    print("string1", "string2", 123);
+    ```
+  </Accordion>
+
+  <Accordion title="delay()">
+    Pauses execution for the given number of milliseconds.
+
+    ```javascript
+    delay(500); // pause for 500ms
+    ```
+  </Accordion>
+
+  <Accordion title="require()">
+    Loads a JS module plugin into RAM and returns its interface.
+
+    ```javascript
+    let serial = require("serial");
+    ```
+  </Accordion>
+
+  <Accordion title="load()">
+    Runs a JS file and returns its export value. Accepts an optional object to use as the global scope.
+
+    ```javascript
+    load("/ext/apps/Scripts/script.js");
+    ```
+  </Accordion>
+
+  <Accordion title="chr()">
+    Converts an ASCII character code to a single-character string.
+
+    ```javascript
+    chr(65); // "A"
+    ```
+  </Accordion>
+
+  <Accordion title="die()">
+    Exits the script immediately with a given error message.
+
+    ```javascript
+    die("Some error occurred");
+    ```
+  </Accordion>
+
+  <Accordion title="parseInt()">
+    Converts a string to a number, with an optional numeric base.
+
+    ```javascript
+    parseInt("123");      // 123
+    parseInt("7b", 16);   // 123
+    ```
+  </Accordion>
+
+  <Accordion title="console object">
+    Outputs to the serial console only (not the device screen), with a corresponding log level. Same arguments as `print()`.
+
+    ```javascript
+    console.log("info message");
+    console.warn("warning");
+    console.error("error");
+    console.debug("debug detail");
+    ```
+  </Accordion>
+
+  <Accordion title="__dirname and __filename">
+    Path constants for the currently running script.
+
+    ```javascript
+    print(__dirname);   // /ext/apps/Scripts
+    print(__filename);  // /ext/apps/Scripts/my_script.js
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Built-in object methods
+
+| Object        | Method / Field             | Description                                                  |
+|---------------|----------------------------|--------------------------------------------------------------|
+| `Number`      | `.toString(base?)`         | Converts number to string, optional base (e.g. 16 for hex).  |
+| `ArrayBuffer` | `.byteLength`              | Length of the buffer in bytes.                               |
+| `ArrayBuffer` | `.slice(start, end?)`      | Creates a new `ArrayBuffer` from a sub-range.                |
+| `Array`       | `.length`                  | Number of elements.                                          |
+| `Array`       | `.push(value)`             | Appends a value to the end of the array.                     |
+| `Array`       | `.splice(index, count?)`   | Removes elements starting at `index` and returns them.       |
+| `String`      | `.length`                  | Number of characters.                                        |
+| `String`      | `.charCodeAt(index)`       | Returns the ASCII code of the character at `index`.          |
+| `String`      | `.indexOf(substr, start?)` | Returns the index of the first match, or `-1`.               |
+| `String`      | `.slice(start, end?)`      | Returns a substring between two indices.                     |
+| `String`      | `.toUpperCase()`           | Returns the string in upper case.                            |
+| `String`      | `.toLowerCase()`           | Returns the string in lower case.                            |
+
+DataView typed array constructors available: `Uint8Array`, `Int8Array`, `Uint16Array`, `Int16Array`, `Uint32Array`, `Int32Array`.
+
+---
+
+## SDK compatibility
+
+Use these built-in functions to check whether your script is compatible with the firmware's JS SDK version before running.
+
+```javascript
+// Check compatibility and stop the script if incompatible
+checkSdkCompatibility(0, 3);
+
+// Check whether a specific extra feature is supported
+doesSdkSupport(["gui-widget"]); // true or false
+
+// Prompt the user if a required feature is missing
+checkSdkFeatures(["gui-widget"]);
+```
+
+| Function                      | Returns                                                                 |
+|-------------------------------|-------------------------------------------------------------------------|
+| `sdkCompatibilityStatus(major, minor)` | `"compatible"`, `"firmwareTooOld"`, or `"firmwareTooNew"`    |
+| `isSdkCompatible(major, minor)`        | `true` or `false`                                             |
+| `checkSdkCompatibility(major, minor)`  | Prompts user to continue if incompatible; does nothing if OK. |
+| `doesSdkSupport(features[])`           | `true` if all listed features are supported.                  |
+| `checkSdkFeatures(features[])`         | Prompts user to continue if any feature is unsupported.       |
+
+---
+
+## Event loop
+
+The event loop is the mechanism that drives event-based programming in the JS subsystem. It is required for advanced modules such as GPIO and GUI.
+
+```javascript
+let eventLoop = require("event_loop");
+```
+
+Unlike most JavaScript runtimes, the event loop in Flipper's JS subsystem is explicit — you create it, subscribe callbacks to event sources, and start it yourself.
+
+<Note>
+  mJS does not support closures. To share state between callbacks, pass extra arguments to `eventLoop.subscribe()`. The callback can return a modified array of those arguments to update them for the next call.
+</Note>
+
+### How it works
+
+```javascript
+let eventLoop = require("event_loop");
+
+// Create a one-shot timer that fires after 1 second
+let timer = eventLoop.timer("oneshot", 1000);
+
+// Subscribe a callback to the timer event
+eventLoop.subscribe(timer, function(_subscription, _item, eventLoop) {
+    print("Hello, World!");
+    eventLoop.stop();
+}, eventLoop);
+
+// Start the loop — this call blocks until eventLoop.stop() is called
+eventLoop.run();
+
+print("Stopped");
+```
+
+### Passing and updating state
+
+Because closures are unsupported, extra arguments to `subscribe()` act as the shared state:
+
+```javascript
+let timer = eventLoop.timer("periodic", 1000);
+eventLoop.subscribe(timer, function(_subscription, _item, counter, eventLoop) {
+    print("Counter is at:", counter);
+    if (counter === 10)
+        eventLoop.stop();
+    // Return updated arguments for the next invocation
+    return [counter + 1, eventLoop];
+}, 0, eventLoop);
+```
+
+### Event loop API
+
+| Method | Description |
+|--------|-------------|
+| `eventLoop.run()` | Starts the loop; blocks until `stop()` is called. |
+| `eventLoop.stop()` | Stops the loop. |
+| `eventLoop.subscribe(contract, callback, ...args)` | Subscribes a callback to an event source. Returns a `SubscriptionManager` with a `.cancel()` method. |
+| `eventLoop.timer(mode, interval)` | Creates a timer event source. `mode` is `"oneshot"` or `"periodic"`. Returns a `Contract`. |
+| `eventLoop.queue(length)` | Creates a message queue. Returns a `Queue` with `.send(message)` and a `.input` contract. |
+
+---
+
+## Using modules
+
+JS modules extend the built-in functions with hardware and system capabilities. They are written in C/C++, stored as FAL (Flipper Application File) files on the microSD card, and loaded on demand.
+
+Import a module with `require()` before calling any of its methods. Modules are automatically unloaded when the script finishes.
+
+```javascript
+let notify = require("notification");
+
+notify.success();
+print("success notification");
+```
+
+<Tip>
+  Only load modules you actually use. Each loaded module consumes RAM for the duration of the script.
+</Tip>
+
+For a full reference of all available modules and their methods, see the [JS modules reference](/dev/js/modules).

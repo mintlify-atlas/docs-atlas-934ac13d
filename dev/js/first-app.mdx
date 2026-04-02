@@ -1,0 +1,168 @@
+---
+title: "Your first JavaScript app"
+description: "Create, deploy, and run a JavaScript app on Flipper Zero, then level up with the official JS SDK for faster development."
+---
+
+This guide walks you through writing a simple script, copying it to your Flipper Zero, and running it — both from the device menu and from a PC terminal. All you need is your Flipper Zero, a PC, and a USB cable.
+
+---
+
+## Part 1: Hello, Flipper
+
+<Steps>
+  <Step title="Create the script file">
+    Create a new text file named `first_app.js` and paste the following code into it:
+
+    ```javascript
+    print("start");
+    delay(1000);
+    print("1");
+    delay(500);
+    print("2");
+    delay(500);
+    print("3");
+    delay(500);
+    print("end");
+    ```
+
+    What this script does:
+
+    - Prints **start**, then waits 1 second.
+    - Prints **1**, **2**, and **3**, with a 0.5-second pause after each number.
+    - Prints **end**.
+
+    `print()` and `delay()` are built-in functions — no module imports are needed. `print()` accepts strings, numbers, booleans, and `undefined`. `delay()` takes a time in milliseconds.
+  </Step>
+
+  <Step title="Copy the file to Flipper Zero">
+    1. Connect your Flipper Zero to your PC via USB.
+    2. Open the **qFlipper** application.
+    3. Go to the **File manager** tab and navigate to `SD Card/apps/Scripts/`.
+    4. Drag and drop `first_app.js` into the qFlipper window.
+
+    Your script is now on the device at `/ext/apps/Scripts/first_app.js`.
+  </Step>
+
+  <Step title="Run the script">
+    <Tabs>
+      <Tab title="From the device menu">
+        1. On your Flipper Zero, navigate to **Apps → Scripts**.
+        2. Select `first_app.js` from the list.
+        3. Press the **OK** button.
+
+        The Flipper Zero screen displays each string with the defined delays.
+      </Tab>
+      <Tab title="From CLI">
+        The CLI is useful for debugging because `print()` output goes to your terminal instead of the device screen.
+
+        1. Connect your Flipper Zero via USB.
+        2. Open a serial terminal using one of the [recommended CLI methods](https://docs.flipper.net/development/cli).
+        3. Run:
+
+        ```bash
+        js /ext/apps/Scripts/first_app.js
+        ```
+
+        You'll see `start`, `1`, `2`, `3`, and `end` printed to the terminal with the specified delays.
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+---
+
+## Part 2: Using the JavaScript SDK
+
+Manually copying files with qFlipper works, but editing code and re-copying on every change gets tedious. The Flipper Zero JavaScript SDK streamlines this with a single command that deploys and runs your app.
+
+<Steps>
+  <Step title="Install Node.js and create a project">
+    1. Install **Node.js** (which includes npm) from the [official downloads page](https://nodejs.org/en/download/package-manager).
+
+    2. Open a terminal in the folder where you want to store your project.
+
+    3. Run the project creation wizard:
+
+    ```bash
+    npx @flipperdevices/create-fz-app@latest
+    ```
+
+    Follow the prompts to set a project name and choose **npm** as the package manager. The wizard creates a project folder with the SDK, all dependencies, and an `index.ts` template file.
+  </Step>
+
+  <Step title="Run your app with a single command">
+    1. Connect your Flipper Zero via USB.
+    2. Open a terminal in your project folder.
+    3. Run:
+
+    ```bash
+    npm start
+    ```
+
+    This copies the script to Flipper Zero and runs it. Output from `print()` appears in your terminal.
+
+    After making any code changes, run `npm start` again. The updated script replaces the previous version on the device automatically.
+  </Step>
+</Steps>
+
+### TypeScript vs plain JavaScript
+
+When using the SDK, you write **TypeScript** in `index.ts`. The SDK transpiles it to plain JavaScript before uploading to the device.
+
+Key differences from plain Flipper JS:
+
+<CodeGroup>
+
+```typescript SDK (TypeScript)
+import * as notify from "@flipperdevices/fz-sdk/notification";
+
+notify.success();
+```
+
+```javascript Plain Flipper JS
+let notify = require("notification");
+
+notify.success();
+```
+
+</CodeGroup>
+
+<Note>
+  The SDK does not yet support multiple `.ts` source files with imports between them. You can use the built-in `load()` function to include other scripts, but those files will not benefit from TypeScript type checking.
+</Note>
+
+If a module function returns a generic type and you need a specific one, cast it explicitly:
+
+```typescript
+// Inline cast
+let text = <string>item;
+
+// Declare with a new type
+let text = item as string;
+```
+
+### JS minifier
+
+The SDK can minify your script before uploading — removing whitespace and shortening variable names to reduce file size and improve load time.
+
+Minification is **disabled by default**. To enable it, set `minify` to `true` in `fz-sdk.config.json5` in your project folder:
+
+```json5
+{
+  minify: true
+}
+```
+
+<Warning>
+  Minified scripts produce harder-to-read error messages. Keep minification disabled while debugging and enable it only for final distribution.
+</Warning>
+
+---
+
+## Next steps
+
+Now that you can run scripts, learn how to access Flipper Zero hardware — GPIO, display, USB keyboard emulation, serial ports, and more — through the available JS modules.
+
+<Card title="JS modules reference" icon="blocks" href="/dev/js/modules">
+  Full reference for every built-in module: badusb, gpio, gui, math, notification, serial, storage, and flipper.
+</Card>

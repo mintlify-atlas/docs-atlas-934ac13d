@@ -1,0 +1,257 @@
+---
+title: 'Expansion modules'
+description: 'Complete protocol reference for building hardware expansion modules that connect to Flipper Zero via GPIO UART and communicate using the Expansion Module Protocol.'
+---
+
+Expansion modules are third-party hardware units that connect to Flipper Zero's GPIO header. They communicate with the Flipper over a serial UART link using the Expansion Module Protocol — a byte-oriented, synchronous request-response protocol with basic error detection.
+
+## Key terms
+
+| Term | Definition |
+|---|---|
+| **Host / Server** | The Flipper Zero unit handling requests |
+| **Device / Client** | The expansion module initiating communication |
+| **RPC** | Protobuf-based protocol used by Flipper companion apps; expansion modules can tunnel it over DATA frames |
+| **Tto** (Timeout Interval) | 250 ms — period of inactivity treated as a lost connection |
+| **Tdt** (Baud Rate Switch Dead Time) | 25 ms — silence required after a baud rate change |
+
+---
+
+## Hardware
+
+Connect your expansion module to the Flipper GPIO header using the appropriate UART pins:
+
+| UART | Tx pin | Rx pin |
+|---|---|---|
+| USART | 13 | 14 |
+| LPUART | 15 | 16 |
+
+---
+
+## Enabling expansion module support
+
+Before the Flipper can detect a module, the feature must be active.
+
+<Tabs>
+  <Tab title="Via settings UI">
+    Navigate to **Settings → Expansion Modules** and select the UART to listen on (`USART` or `LPUART`).
+  </Tab>
+  <Tab title="Programmatically">
+    ```c
+    expansion_enable(expansion, ExpansionUartUart);  // or ExpansionUartLpuart
+    ```
+
+    To stop listening and drop any active connection:
+
+    ```c
+    expansion_disable(expansion);
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Frame structure
+
+Every frame has three fields:
+
+| Header (1 byte) | Contents (0 or more bytes) | Checksum (1 byte) |
+|---|---|---|
+| Frame type | Frame payload | XOR checksum |
+
+The checksum is computed by XOR-ing every byte in the frame except the checksum byte itself, starting from an initial value of `0x00`.
+
+---
+
+## Frame types
+
+### HEARTBEAT (0x01)
+
+Sent by either side to maintain an idle connection. If no frame is received within **Tto** (250 ms), the connection is considered lost and both sides reset to their initial state.
+
+| Header | Checksum |
+|---|---|
+| `0x01` | XOR checksum |
+
+<Note>
+  HEARTBEAT frames carry no payload — the contents field is absent (0 bytes).
+</Note>
+
+---
+
+### STATUS (0x02)
+
+Every received frame must be acknowledged with a STATUS response. The error code indicates whether the previous frame was accepted.
+
+| Header | Contents (1 byte) | Checksum |
+|---|---|---|
+| `0x02` | Error code | XOR checksum |
+
+**Error codes:**
+
+| Code | Meaning |
+|---|---|
+| `0x00` | OK — no error |
+| `0x01` | Unknown error |
+| `0x02` | Baud rate not supported |
+
+---
+
+### BAUD RATE (0x03)
+
+Used to negotiate communication speed. All connections begin at **9600 baud**. The module must send a BAUD RATE frame as its first message, even if it intends to stay at 9600.
+
+| Header | Contents (4 bytes) | Checksum |
+|---|---|---|
+| `0x03` | Requested baud rate (little-endian uint32) | XOR checksum |
+
+**Negotiation flow:**
+
+- If the Flipper supports the requested rate, it responds with STATUS `0x00` (OK), then both sides switch to the new rate after waiting **Tdt** (25 ms).
+- If the rate is unsupported, the Flipper responds with STATUS `0x02`. The rate stays at 9600 and the module may try a different rate.
+- No other frame types are permitted until baud rate negotiation succeeds.
+
+---
+
+### CONTROL (0x04)
+
+Controls communication features and device capabilities.
+
+| Header | Contents (1 byte) | Checksum |
+|---|---|---|
+| `0x04` | Command | XOR checksum |
+
+**Commands:**
+
+| Command | Meaning | Constraint |
+|---|---|---|
+| `0x00` | Start RPC session | Only when RPC session is **not** active |
+| `0x01` | Stop RPC session | Only when RPC session **is** active |
+| `0x02` | Enable OTG (5 V) on GPIO | Only when RPC session is **not** active |
+| `0x03` | Disable OTG (5 V) on GPIO | Only when RPC session is **not** active |
+
+<Note>
+  Once an RPC session is active, OTG power must be controlled via RPC messages rather than CONTROL frames.
+</Note>
+
+---
+
+### DATA (0x05)
+
+Transmits arbitrary data in either direction. Each frame carries up to 64 bytes. When an RPC session is open, all received bytes are forwarded directly to the RPC subsystem.
+
+| Header | Contents (1 to 65 bytes) | Checksum |
+|---|---|---|
+| `0x05` | Data size byte + data | XOR checksum |
+
+The contents field has the following internal structure:
+
+| Data size (1 byte) | Data (0–64 bytes) |
+|---|---|
+| `0x00`–`0x40` | Arbitrary payload |
+
+<Warning>
+  RPC requests larger than 64 bytes must be split across multiple DATA frames. The module must wait for a STATUS acknowledgment after each frame before sending the next.
+</Warning>
+
+---
+
+## Communication flow
+
+The module always initiates communication. The full exchange for establishing a connection and running an RPC session looks like this:
+
+```text
+        MODULE               |            FLIPPER
+-----------------------------+---------------------------
+                             |        (Start)
+Pull down RX                -->
+                            <--       Heartbeat
+Baud Rate                   -->
+                            <--       Status [OK | Error]
+                             |
+(Module changes baud rate    |        (Flipper changes
+ and waits for Tdt)          |         baud rate)
+                             |
+Control [Start RPC]         -->
+                            <--       Status [OK | Error]
+-----------------------------+--------------------------- (1)
+Data [RPC Request]          -->
+                            <--       Status [OK | Error]
+                            <--       Data [RPC Response]
+Status [OK | Error]         -->
+-----------------------------+--------------------------- (2)
+Data [RPC Request pt.1]     -->
+                            <--       Status [OK | Error]
+Data [RPC Request pt.2]     -->
+                            <--       Status [OK | Error]
+Data [RPC Request pt.3]     -->
+                            <--       Status [OK | Error]
+                            <--       Data [RPC Response]
+Status [OK | Error]         -->
+-----------------------------+--------------------------- (3)
+Heartbeat                   -->
+                            <--       Heartbeat
+Heartbeat                   -->
+                            <--       Heartbeat
+-----------------------------+---------------------------
+Control [Stop RPC]          -->
+                            <--       Status [OK | Error]
+(Module disconnected)        |
+                             |        (No activity within Tto
+                             |            return to start)
+
+(1) The module MUST confirm all implicitly sent frames (e.g. DATA frames
+    containing RPC responses) with a STATUS frame.
+(2) RPC requests larger than 64 bytes are split into multiple DATA frames.
+    Every DATA frame MUST be confirmed with a STATUS frame.
+(3) When idle, the module MUST send HEARTBEAT frames with period < Tto
+    to keep the connection alive. The host responds to each one.
+```
+
+**Step-by-step summary:**
+
+<Steps>
+  <Step title="Module signals presence">
+    The module briefly pulls the RX pin low. The Flipper responds with a HEARTBEAT frame to signal readiness.
+  </Step>
+  <Step title="Baud rate negotiation">
+    The module sends a BAUD RATE frame within **Tto**. If the Flipper accepts the rate, both sides switch after **Tdt** of silence. If rejected, the module may retry with an alternative rate.
+  </Step>
+  <Step title="Start RPC session (optional)">
+    The module sends a CONTROL frame with command `0x00` to open an RPC session. The Flipper responds with STATUS.
+  </Step>
+  <Step title="Exchange data">
+    The module sends DATA frames. Each must be acknowledged with a STATUS frame before the next is sent. RPC responses from the Flipper arrive as DATA frames and must also be acknowledged.
+  </Step>
+  <Step title="Maintain the connection">
+    While idle, the module sends HEARTBEAT frames at intervals shorter than **Tto**. The Flipper echoes each one.
+  </Step>
+  <Step title="Disconnect">
+    The module sends a CONTROL frame with command `0x01` to stop the RPC session, then disconnects. The Flipper returns to its initial state after **Tto** of inactivity.
+  </Step>
+</Steps>
+
+---
+
+## Error detection
+
+The XOR checksum covers every byte in the frame except the checksum byte itself. Calculation starts with an initial value of `0x00`:
+
+```c
+uint8_t checksum = 0x00;
+for (size_t i = 0; i < frame_length; i++) {
+    checksum ^= frame_bytes[i];
+}
+// append checksum as the final byte
+```
+
+### Error recovery
+
+When either side detects a checksum mismatch:
+
+1. It immediately stops all communication and resets to its initial state.
+2. The other side eventually experiences a timeout (**Tto** = 250 ms) with no incoming frames.
+3. The timeout causes that side to reset too.
+4. The module can then re-initiate the connection from scratch.
+
+No explicit error recovery handshake is needed — the timeout mechanism handles reconnection automatically.

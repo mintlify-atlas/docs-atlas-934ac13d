@@ -1,0 +1,771 @@
+---
+title: "JS modules reference"
+description: "Complete reference for all JavaScript modules available in Flipper Zero firmware: badusb, gpio, gui, math, notification, serial, storage, and flipper."
+---
+
+JS modules extend the built-in functions with access to Flipper Zero hardware and system capabilities. They are written in C/C++ and stored as FAL (Flipper Application File) files on the microSD card.
+
+Load a module with `require()` before calling any of its methods. All loaded modules are automatically unloaded when the script exits.
+
+```javascript
+let myModule = require("module_name");
+```
+
+<Tip>
+  Only load modules you actually use. Each loaded module consumes RAM for the duration of the script.
+</Tip>
+
+---
+
+<AccordionGroup>
+
+  <Accordion title="badusb — USB keyboard emulation">
+    Enables Flipper Zero to act as a USB HID keyboard, sending key presses and typed strings to a connected computer.
+
+    ```javascript
+    let badusb = require("badusb");
+    ```
+
+    Call `setup()` before any other method. After setup, check `isConnected()` before sending input.
+
+    **Methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `badusb.setup(config?)` | Starts USB HID. Optional config: `vid`, `pid`, `mfrName`, `prodName`, `layoutPath`. |
+    | `badusb.isConnected()` | Returns `true` if USB is connected. |
+    | `badusb.press(...keys)` | Presses and releases a key or key combo. |
+    | `badusb.hold(...keys)` | Holds keys down (up to 5 non-modifier keys simultaneously). |
+    | `badusb.release(...keys?)` | Releases held keys. Releases all if called with no arguments. |
+    | `badusb.print(str, delay?)` | Types a string. Optional delay (ms) between key presses. |
+    | `badusb.println(str, delay?)` | Same as `print()`, followed by pressing ENTER. |
+    | `badusb.altPrint(str, delay?)` | Types using Alt+Numpad method. Windows only. |
+    | `badusb.altPrintln(str, delay?)` | Same as `altPrint()`, followed by pressing ENTER. |
+    | `badusb.quit()` | Releases USB HID, allowing interchange with other USB modes. |
+
+    **Key names**
+
+    Modifier keys: `CTRL`, `SHIFT`, `ALT`, `GUI`
+
+    Special keys: `DOWN`, `LEFT`, `RIGHT`, `UP`, `ENTER`, `DELETE`, `BACKSPACE`, `END`, `HOME`, `ESC`, `INSERT`, `PAGEUP`, `PAGEDOWN`, `CAPSLOCK`, `NUMLOCK`, `SCROLLLOCK`, `PRINTSCREEN`, `PAUSE`, `SPACE`, `TAB`, `MENU`, `F1`–`F24`, `NUM0`–`NUM9`
+
+    You can also pass a numeric HID key code directly.
+
+    **Examples**
+
+    ```javascript
+    let badusb = require("badusb");
+
+    // Start with default USB parameters
+    badusb.setup();
+
+    // Start with custom VID:PID and device name
+    badusb.setup({ vid: 0xAAAA, pid: 0xBBBB, mfrName: "Flipper Devices", prodName: "Flipper Zero" });
+
+    if (badusb.isConnected()) {
+        badusb.println("Hello, world!"); // Type text and press Enter
+        badusb.press("CTRL", "a");       // Select all
+        badusb.press("CTRL", "SHIFT", "ESC"); // CTRL+SHIFT+ESC combo
+        badusb.press(0x47);              // Scroll Lock (HID code 0x47)
+        badusb.hold("CTRL", "v");        // Hold CTRL+V
+        badusb.release();                // Release all held keys
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="gpio — GPIO pin control">
+    Controls the GPIO pins on Flipper Zero's expansion connector. Supports digital input/output, analog input, interrupts, and PWM.
+
+    This module depends on `event_loop`, which must be imported first.
+
+    ```javascript
+    let eventLoop = require("event_loop");
+    let gpio = require("gpio");
+    ```
+
+    **Methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `gpio.get(pin)` | Returns a `Pin` object for the given pin identifier (e.g. `"pc3"`, `"pa6"`, `7`). |
+
+    **Pin object methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `pin.init(mode)` | Configures the pin. See mode options below. |
+    | `pin.write(value)` | Writes a boolean logic level to an output pin. |
+    | `pin.read()` | Reads a boolean logic level from a digital input pin. |
+    | `pin.readAnalog()` | Reads an analog voltage in millivolts from an analog input pin. |
+    | `pin.interrupt()` | Attaches an interrupt; returns an event loop `Contract`. |
+    | `pin.isPwmSupported()` | Returns `true` if this pin supports PWM. |
+    | `pin.pwmWrite(freq, duty)` | Starts PWM with the given frequency (Hz) and duty cycle (%). |
+    | `pin.isPwmRunning()` | Returns `true` if PWM is currently running on this pin. |
+    | `pin.pwmStop()` | Stops PWM on this pin. |
+
+    **Mode configuration**
+
+    ```javascript
+    // Output: push-pull
+    pin.init({ direction: "out", outMode: "push_pull" });
+
+    // Output: open-drain
+    pin.init({ direction: "out", outMode: "open_drain" });
+
+    // Input: digital
+    pin.init({ direction: "in", inMode: "plain_digital" });
+
+    // Input: analog
+    pin.init({ direction: "in", inMode: "analog" });
+
+    // Input: interrupt on rising edge
+    pin.init({ direction: "in", inMode: "interrupt", edge: "rising" });
+    // edge options: "rising", "falling", "both"
+    // pull options: "up", "down" (optional)
+    ```
+
+    **Example**
+
+    ```javascript
+    let eventLoop = require("event_loop");
+    let gpio = require("gpio");
+
+    let led = gpio.get("pc3");
+    led.init({ direction: "out", outMode: "push_pull" });
+
+    led.write(true);
+    delay(1000);
+    led.write(false);
+    delay(1000);
+    ```
+  </Accordion>
+
+  <Accordion title="gui — graphical user interface">
+    Provides access to Flipper Zero's display and input system through a ViewDispatcher. GUI requires `event_loop` and must be imported after it.
+
+    ```javascript
+    let eventLoop = require("event_loop");
+    let gui = require("gui");
+    ```
+
+    The `gui` module itself manages the `viewDispatcher`, which switches between views and handles input events. Individual views are loaded as submodules (see below).
+
+    **ViewDispatcher API**
+
+    | Method / Property | Description |
+    |-------------------|-------------|
+    | `gui.viewDispatcher.switchTo(view)` | Switches to the given `View`. |
+    | `gui.viewDispatcher.sendTo(direction)` | Sends the viewport to `"front"` or `"back"`. |
+    | `gui.viewDispatcher.sendCustom(event)` | Fires a custom numeric event. |
+    | `gui.viewDispatcher.custom` | Event source `Contract` for custom events. |
+    | `gui.viewDispatcher.navigation` | Event source `Contract` fired when the back key is pressed. |
+    | `gui.viewDispatcher.currentView` | The `View` currently being shown. |
+
+    **ViewFactory methods** (returned by each view submodule)
+
+    | Method | Description |
+    |--------|-------------|
+    | `ViewFactory.make()` | Creates a `View` instance with default properties. |
+    | `ViewFactory.makeWith(props, children?)` | Creates a `View` and sets initial properties. |
+
+    **View methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `view.set(property, value)` | Sets a view property by name. |
+    | `view.addChild(child)` | Adds a child element to the view. |
+    | `view.resetChildren()` | Removes all children from the view. |
+    | `view.setChildren(children)` | Replaces all children with a new array. |
+
+    **Multi-view example**
+
+    ```javascript
+    let eventLoop = require("event_loop");
+    let gui = require("gui");
+    let loadingView = require("gui/loading");
+    let submenuView = require("gui/submenu");
+    let emptyView = require("gui/empty_screen");
+
+    let views = {
+        loading: loadingView.make(),
+        empty: emptyView.make(),
+        demos: submenuView.makeWith({
+            items: ["Hourglass screen", "Empty screen", "Exit app"],
+        }),
+    };
+
+    eventLoop.subscribe(views.demos.chosen, function (_sub, index, gui, eventLoop, views) {
+        if (index === 0) {
+            gui.viewDispatcher.switchTo(views.loading);
+        } else if (index === 1) {
+            gui.viewDispatcher.switchTo(views.empty);
+        } else if (index === 2) {
+            eventLoop.stop();
+        }
+    }, gui, eventLoop, views);
+
+    eventLoop.subscribe(gui.viewDispatcher.navigation, function (_sub, _, gui, views) {
+        gui.viewDispatcher.switchTo(views.demos);
+    }, gui, views);
+
+    gui.viewDispatcher.switchTo(views.demos);
+    eventLoop.run();
+    ```
+
+    ### gui/dialog
+
+    Displays a dialog with a header, body text, and up to three labeled buttons.
+
+    ```javascript
+    let dialogView = require("gui/dialog");
+    ```
+
+    **Props**
+
+    | Prop | Type | Description |
+    |------|------|-------------|
+    | `header` | `string` | Bold text at the top of the screen. |
+    | `text` | `string` | Text in the middle of the screen. |
+    | `left` | `string` | Label for the left button. Hidden if unset. |
+    | `center` | `string` | Label for the center button. Hidden if unset. |
+    | `right` | `string` | Label for the right button. Hidden if unset. |
+
+    **Events**
+
+    | Event | Type | Description |
+    |-------|------|-------------|
+    | `input` | `string` | Fires on button press. Value is `"left"`, `"center"`, or `"right"`. |
+
+    ```javascript
+    let dialog = dialogView.makeWith({
+        header: "Confirm",
+        text: "Continue?",
+        left: "No",
+        right: "Yes",
+    });
+
+    eventLoop.subscribe(dialog.input, function (_sub, button, eventLoop) {
+        print("Pressed:", button);
+        eventLoop.stop();
+    }, eventLoop);
+
+    gui.viewDispatcher.switchTo(dialog);
+    eventLoop.run();
+    ```
+
+    ### gui/submenu
+
+    Displays a scrollable list of clickable text entries.
+
+    ```javascript
+    let submenuView = require("gui/submenu");
+    ```
+
+    **Props**
+
+    | Prop | Type | Description |
+    |------|------|-------------|
+    | `header` | `string` | Single line of text above the list. |
+    | `items` | `string[]` | Array of entry labels. |
+
+    **Events**
+
+    | Event | Type | Description |
+    |-------|------|-------------|
+    | `chosen` | `number` | Fires when an entry is selected. Value is the index of the entry. |
+
+    ```javascript
+    let menu = submenuView.makeWith({
+        header: "Choose an option",
+        items: ["Option A", "Option B", "Exit"],
+    });
+
+    eventLoop.subscribe(menu.chosen, function (_sub, index, eventLoop) {
+        print("Selected index:", index);
+        if (index === 2) eventLoop.stop();
+    }, eventLoop);
+    ```
+
+    ### gui/text_input
+
+    Displays an on-screen keyboard for text entry.
+
+    ```javascript
+    let textInputView = require("gui/text_input");
+    ```
+
+    **Props**
+
+    | Prop | Type | Description |
+    |------|------|-------------|
+    | `header` | `string` | Text above the keyboard. |
+    | `minLength` | `number` | Minimum required text length. |
+    | `maxLength` | `number` | Maximum allowed text length. Default: `32`. |
+    | `defaultText` | `string` | Text shown by default. |
+    | `defaultTextClear` | `boolean` | Clears default text when the user starts typing. |
+
+    **Events**
+
+    | Event | Type | Description |
+    |-------|------|-------------|
+    | `input` | `string` | Fires when the user presses Save and the text length is within bounds. |
+
+    ```javascript
+    let textInput = textInputView.makeWith({
+        header: "Enter your name",
+        minLength: 1,
+        maxLength: 16,
+        defaultText: "Flipper",
+        defaultTextClear: true,
+    });
+
+    eventLoop.subscribe(textInput.input, function (_sub, text, eventLoop) {
+        print("Entered:", text);
+        eventLoop.stop();
+    }, eventLoop);
+    ```
+
+    ### gui/byte_input
+
+    Displays a hexadecimal keyboard for entering binary data byte by byte.
+
+    ```javascript
+    let byteInputView = require("gui/byte_input");
+    ```
+
+    **Props**
+
+    | Prop | Type | Description |
+    |------|------|-------------|
+    | `length` | `number` | Number of bytes to input. |
+    | `header` | `string` | Text above the keyboard. |
+    | `defaultData` | `string` | Default data to show. |
+
+    **Events**
+
+    | Event | Type | Description |
+    |-------|------|-------------|
+    | `input` | `ArrayBuffer` | Fires when the user presses Save. |
+
+    ```javascript
+    let byteInput = byteInputView.makeWith({
+        length: 4,
+        header: "Enter 4 bytes",
+    });
+
+    eventLoop.subscribe(byteInput.input, function (_sub, data, eventLoop) {
+        print("Got bytes, length:", data.byteLength);
+        eventLoop.stop();
+    }, eventLoop);
+    ```
+
+    ### gui/file_picker
+
+    Prompts the user to select a file from the filesystem. Unlike other GUI views, this is a function call, not a view.
+
+    ```javascript
+    let filePicker = require("gui/file_picker");
+    ```
+
+    **`filePicker.pickFile(basePath, extension)`**
+
+    | Parameter | Description |
+    |-----------|-------------|
+    | `basePath` | The directory to open. |
+    | `extension` | File extension filter, e.g. `".sub"`, `".iso|.img"`, or `"*"` for all files. |
+
+    Returns a `string` path to the selected file, or `undefined` if the user cancelled.
+
+    ```javascript
+    let filePicker = require("gui/file_picker");
+
+    let path = filePicker.pickFile("/ext", ".sub");
+    if (path !== undefined) {
+        print("Selected:", path);
+    } else {
+        print("Cancelled");
+    }
+    ```
+
+    ### gui/text_box
+
+    Displays a scrollable, read-only text field.
+
+    ```javascript
+    let textBoxView = require("gui/text_box");
+    ```
+
+    **Props**
+
+    | Prop | Type | Description |
+    |------|------|-------------|
+    | `text` | `string` | Text to display. |
+    | `font` | `string` | Display font: `"text"` or `"hex"`. |
+    | `focus` | `string` | Initial scroll position: `"start"` or `"end"`. |
+
+    ```javascript
+    let textBox = textBoxView.makeWith({
+        text: "Line 1\nLine 2\nLine 3",
+        font: "text",
+        focus: "start",
+    });
+
+    gui.viewDispatcher.switchTo(textBox);
+    eventLoop.run();
+    ```
+
+    ### gui/widget
+
+    Displays a combination of custom graphical elements on one screen.
+
+    ```javascript
+    let widgetView = require("gui/widget");
+    ```
+
+    This view has no props. Instead, it takes children — elements defined as objects with an `element` type field.
+
+    **Element types**
+
+    | Element | Key properties | Description |
+    |---------|---------------|-------------|
+    | `string` | `x`, `y`, `align`, `font`, `text` | Single-line text. |
+    | `string_multiline` | `x`, `y`, `align`, `font`, `text` | Multi-line text. |
+    | `text_box` | `x`, `y`, `w`, `h`, `align`, `text`, `stripToDots` | Scrollable text box area. |
+    | `text_scroll` | `x`, `y`, `w`, `h`, `text` | Vertically scrollable text. |
+    | `button` | `text`, `button` | Button at the bottom (`"left"`, `"center"`, or `"right"`). |
+    | `icon` | `x`, `y`, `iconData` | Displays an icon (see `gui/icon`). |
+    | `rect` | `x`, `y`, `w`, `h`, `radius`, `fill` | Rectangle, optionally rounded and filled. |
+    | `circle` | `x`, `y`, `radius`, `fill` | Circle, optionally filled. |
+    | `line` | `x1`, `y1`, `x2`, `y2` | Line between two points. |
+
+    **`button` event**
+
+    | Event | Type | Description |
+    |-------|------|-------------|
+    | `button` | `ButtonEvent` | Fires when a button is pressed. Fields: `key` (`"left"`, `"center"`, `"right"`) and `type` (`"press"`, `"release"`, `"short"`, `"long"`, `"repeat"`). |
+
+    ```javascript
+    let widget = widgetView.makeWith({}, [
+        { element: "string", x: 64, y: 10, align: "cm", font: "primary", text: "Hello!" },
+        { element: "button", button: "right", text: "Next" },
+        { element: "button", button: "left", text: "Back" },
+        { element: "rect", x: 10, y: 20, w: 108, h: 30, radius: 3, fill: false },
+    ]);
+
+    eventLoop.subscribe(widget.button, function (_sub, event, eventLoop) {
+        print("Button:", event.key, "Type:", event.type);
+        if (event.type === "short") eventLoop.stop();
+    }, eventLoop);
+    ```
+
+    ### gui/loading
+
+    Displays an animated hourglass icon. Suppresses all navigation events, preventing the user from exiting with the BACK key while loading.
+
+    ```javascript
+    let loadingView = require("gui/loading");
+    ```
+
+    This view has no props.
+
+    ```javascript
+    let loading = loadingView.make();
+    gui.viewDispatcher.switchTo(loading);
+    // perform async work, then switch to another view
+    ```
+
+    ### gui/empty_screen
+
+    Displays a blank screen with no content.
+
+    ```javascript
+    let emptyView = require("gui/empty_screen");
+    ```
+
+    This view has no props.
+
+    ```javascript
+    let empty = emptyView.make();
+    gui.viewDispatcher.switchTo(empty);
+    ```
+
+    ### gui/icon
+
+    Retrieves icon data for use in GUI views such as the widget `icon` element.
+
+    ```javascript
+    let icon = require("gui/icon");
+    ```
+
+    **Methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `icon.getBuiltin(name)` | Returns `IconData` for a built-in firmware icon. Supported names: `"DolphinWait_59x54"`, `"js_script_10px"`. |
+    | `icon.loadFxbm(path)` | Loads a `.fxbm` file (XBM Flipper sprite) from the filesystem. Auto-unloaded when the script exits. |
+
+    ```javascript
+    let icon = require("gui/icon");
+
+    let dolphin = icon.getBuiltin("DolphinWait_59x54");
+    // use dolphin as iconData in a widget icon element
+    ```
+  </Accordion>
+
+  <Accordion title="math — mathematical functions">
+    Provides mathematical functions and constants.
+
+    ```javascript
+    let math = require("math");
+    ```
+
+    **Constants**
+
+    | Constant | Value |
+    |----------|-------|
+    | `math.PI` | 3.14159265358979… |
+    | `math.E` | 2.71828182845904… |
+    | `math.EPSILON` | 2.2204460492503131e-16 |
+
+    **Methods**
+
+    | Method | Description | Example |
+    |--------|-------------|---------|
+    | `math.abs(x)` | Absolute value. | `math.abs(-5)` → `5` |
+    | `math.ceil(x)` | Round up to nearest integer. | `math.ceil(7.004)` → `8` |
+    | `math.floor(x)` | Round down to nearest integer. | `math.floor(45.95)` → `45` |
+    | `math.trunc(x)` | Integer part, dropping fractional digits. | `math.trunc(13.37)` → `13` |
+    | `math.round` | Not available — use `math.floor(x + 0.5)`. | — |
+    | `math.sqrt(x)` | Square root. `x` must be ≥ 0. | `math.sqrt(25)` → `5` |
+    | `math.cbrt(x)` | Cube root. | `math.cbrt(2)` → `1.259…` |
+    | `math.pow(base, exp)` | Base raised to the power of exponent. | `math.pow(2, 10)` → `1024` |
+    | `math.exp(x)` | e raised to the power of x. | `math.exp(1)` → `2.718…` |
+    | `math.log(x)` | Natural logarithm (base e). | `math.log(1)` → `0` |
+    | `math.sin(x)` | Sine of x (radians). | `math.sin(math.PI / 2)` → `1` |
+    | `math.cos(x)` | Cosine of x (radians). | `math.cos(math.PI)` → `-1` |
+    | `math.asin(x)` | Inverse sine (radians). | `math.asin(0.5)` → `0.5235…` |
+    | `math.acos(x)` | Inverse cosine (radians). | `math.acos(-1)` → `3.1415…` |
+    | `math.atan(x)` | Inverse tangent (radians). | `math.atan(1)` → `0.7853…` |
+    | `math.atan2(y, x)` | Angle between x-axis and point (x, y). | `math.atan2(90, 15)` → `1.405…` |
+    | `math.asinh(x)` | Inverse hyperbolic sine. | `math.asinh(1)` → `0.881…` |
+    | `math.acosh(x)` | Inverse hyperbolic cosine. | `math.acosh(1)` → `0` |
+    | `math.atanh(x)` | Inverse hyperbolic tangent. | `math.atanh(0.5)` → `0.549…` |
+    | `math.clz32(x)` | Count leading zeros in 32-bit representation. | `math.clz32(1)` → `31` |
+    | `math.random()` | Pseudo-random float in [0, 1). | `math.random()` |
+    | `math.max(a, b)` | Larger of two numbers. | `math.max(10, 20)` → `20` |
+    | `math.min(a, b)` | Smaller of two numbers. | `math.min(10, 20)` → `10` |
+    | `math.sign(x)` | `1` if x ≥ 0, `-1` if x < 0. | `math.sign(-3)` → `-1` |
+    | `math.isEqual(a, b, tol)` | `true` if `|a - b| < tol`. | `math.isEqual(3.556, 3.555, 0.01)` → `true` |
+
+    ```javascript
+    let math = require("math");
+
+    let angle = math.PI / 4;
+    print("sin(45°):", math.sin(angle));    // 0.7071…
+    print("cos(45°):", math.cos(angle));    // 0.7071…
+    print("sqrt(2):", math.sqrt(2));        // 1.4142…
+    print("random:", math.random());
+    ```
+  </Accordion>
+
+  <Accordion title="notification — LED and sound feedback">
+    Triggers built-in notification sequences: success, error, or LED blink.
+
+    ```javascript
+    let notify = require("notification");
+    ```
+
+    **Methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `notify.success()` | Plays the "success" notification (green LED + sound). |
+    | `notify.error()` | Plays the "error" notification (red LED + sound). |
+    | `notify.blink(color, type)` | Blinks the notification LED. |
+
+    **`blink()` parameters**
+
+    - `color`: `"blue"`, `"red"`, `"green"`, `"yellow"`, `"cyan"`, or `"magenta"`
+    - `type`: `"short"` or `"long"`
+
+    ```javascript
+    let notify = require("notification");
+
+    notify.success();                    // Success sequence
+    notify.error();                      // Error sequence
+    notify.blink("red", "short");        // Short red blink
+    notify.blink("green", "long");       // Long green blink
+    ```
+  </Accordion>
+
+  <Accordion title="serial — UART serial communication">
+    Transmits and receives data over Flipper Zero's UART interfaces (`usart` or `lpuart`).
+
+    ```javascript
+    let serial = require("serial");
+    ```
+
+    Call `setup()` before any other method. Calling `setup()` automatically disables the Expansion module service to prevent interference.
+
+    **Methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `serial.setup(port, baud, framing?)` | Configures the serial port. `port`: `"usart"` or `"lpuart"`. Optional `framing` object: `{ dataBits, parity, stopBits }`. |
+    | `serial.write(...data)` | Writes data. Accepts strings, numbers (single byte), arrays of numbers, `ArrayBuffer`, or `DataView`. |
+    | `serial.read(n, timeout?)` | Reads exactly `n` bytes. Returns a string or `undefined` on timeout. |
+    | `serial.readln(timeout?)` | Reads until a line break. Returns a string or `undefined` on timeout. |
+    | `serial.readAny(timeout?)` | Reads any available data. Returns a string or `undefined` on timeout. |
+    | `serial.readBytes(n, timeout?)` | Reads `n` bytes. Returns an `ArrayBuffer` or `undefined` on timeout. |
+    | `serial.expect(patterns, timeout?)` | Waits for a string or byte pattern. Returns the index of the matched pattern or `undefined`. |
+    | `serial.end()` | Deinitializes the serial port (allows re-initialization within the same script). |
+
+    **Framing configuration**
+
+    | Option | Values |
+    |--------|--------|
+    | `dataBits` | `"6"`, `"7"`, `"8"`, `"9"` |
+    | `parity` | `"none"`, `"even"`, `"odd"` |
+    | `stopBits` | `"0.5"`, `"1"`, `"1.5"`, `"2"` (LPUART only supports `"1"` and `"2"`) |
+
+    ```javascript
+    let serial = require("serial");
+
+    serial.setup("lpuart", 115200);
+
+    serial.write("AT\r\n");
+    let response = serial.readln(1000);
+    if (response !== undefined) {
+        print("Response:", response);
+    }
+
+    // Wait for one of two patterns
+    let idx = serial.expect([": not found", "Usage: "]);
+    print("Matched pattern index:", idx);
+
+    serial.end();
+    serial.setup("usart", 9600);
+    serial.write(0x0a); // Write a single byte
+    serial.write("Hello, world!", [0x0d, 0x0a]); // String + CRLF
+    ```
+  </Accordion>
+
+  <Accordion title="storage — file and directory access">
+    Reads and writes files and directories on the Flipper Zero filesystems: `/int/` (internal flash) and `/ext/` (microSD card).
+
+    ```javascript
+    let storage = require("storage");
+    ```
+
+    **File paths**
+
+    Paths use `/int/` for internal flash or `/ext/` for the microSD card:
+
+    ```
+    /ext/example_dir/example_file.txt
+    ```
+
+    **File class** (returned by `openFile()`)
+
+    | Method | Description |
+    |--------|-------------|
+    | `file.isOpen()` | Returns `true` if the file is open. |
+    | `file.read(mode, bytes)` | Reads bytes. `mode`: `"ascii"` returns a string; `"binary"` returns `ArrayBuffer`. |
+    | `file.write(data)` | Writes a string or `ArrayBuffer`. Returns bytes written. |
+    | `file.seekRelative(bytes)` | Moves R/W pointer forward by `bytes`. |
+    | `file.seekAbsolute(bytes)` | Moves R/W pointer to an absolute position. |
+    | `file.tell()` | Returns current R/W pointer position. |
+    | `file.truncate()` | Discards data after the current pointer position. |
+    | `file.size()` | Returns the file size in bytes. |
+    | `file.eof()` | Returns `true` if the pointer is at end of file. |
+    | `file.copyTo(dest, bytes)` | Copies bytes from this file into another open file. |
+    | `file.close()` | Closes the file. |
+
+    **Module methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `storage.openFile(path, access, openMode)` | Opens a file. `access`: `"r"`, `"w"`, `"rw"`. `openMode`: `"open_existing"`, `"open_always"`, `"open_append"`, `"create_new"`, `"create_always"`. Returns a `File` or `undefined`. |
+    | `storage.fileExists(path)` | Returns `true` if a file exists at `path`. |
+    | `storage.fileOrDirExists(path)` | Returns `true` if a file or directory exists. |
+    | `storage.directoryExists(path)` | Returns `true` if a directory exists. |
+    | `storage.stat(path)` | Returns a `FileInfo` struct (`path`, `isDirectory`, `size`, `accessTime`) or `undefined`. |
+    | `storage.fsInfo(filesystem)` | Returns a `FsInfo` struct (`totalSpace`, `freeSpace`) or `undefined`. |
+    | `storage.makeDirectory(path)` | Creates an empty directory. |
+    | `storage.readDirectory(path)` | Returns an array of `FileInfo` entries or `undefined`. |
+    | `storage.copy(src, dst)` | Copies a file or directory recursively. |
+    | `storage.rename(src, dst)` | Renames or moves a file or directory. |
+    | `storage.remove(path)` | Removes a file or empty directory. |
+    | `storage.rmrf(path)` | Recursively removes a file or non-empty directory. |
+    | `storage.arePathsEqual(p1, p2)` | Returns `true` if both paths refer to the same location. |
+    | `storage.isSubpathOf(parent, child)` | Returns `true` if `child` is a subpath of `parent`. |
+    | `storage.nextAvailableFilename(dir, name, ext, maxLen)` | Returns the next available filename with a numeric suffix. |
+
+    ```javascript
+    let storage = require("storage");
+
+    // Write a file
+    let file = storage.openFile("/ext/hello.txt", "w", "create_always");
+    file.write("Hello, Flipper!");
+    file.close();
+
+    // Read the file back
+    let f = storage.openFile("/ext/hello.txt", "r", "open_existing");
+    let content = f.read("ascii", 100);
+    print(content); // "Hello, Flipper!"
+    f.close();
+
+    // Check free space on the SD card
+    let info = storage.fsInfo("/ext");
+    print("Free space:", info.freeSpace, "bytes");
+
+    // List directory contents
+    let entries = storage.readDirectory("/ext/apps");
+    if (entries !== undefined) {
+        for (let i = 0; i < entries.length; i++) {
+            print(entries[i].path, entries[i].isDirectory ? "(dir)" : "");
+        }
+    }
+
+    // Clean up
+    storage.remove("/ext/hello.txt");
+    ```
+  </Accordion>
+
+  <Accordion title="flipper — device information">
+    Queries device identity and status.
+
+    ```javascript
+    let flipper = require("flipper");
+    ```
+
+    **Values**
+
+    | Property | Description |
+    |----------|-------------|
+    | `flipper.firmwareVendor` | String identifying the firmware vendor. Original firmware reports `"flipperdevices"`. |
+    | `flipper.jsSdkVersion` | Version of the JavaScript SDK on this device. |
+
+    <Warning>
+      Do not use `firmwareVendor` or `jsSdkVersion` to detect feature availability. Use `sdkCompatibilityStatus()`, `doesSdkSupport()`, or `checkSdkCompatibility()` instead.
+    </Warning>
+
+    **Methods**
+
+    | Method | Description |
+    |--------|-------------|
+    | `flipper.getModel()` | Returns the device model string (e.g. `"Flipper Zero"`). |
+    | `flipper.getName()` | Returns the name of the virtual dolphin (e.g. `"Fur1pp44"`). |
+    | `flipper.getBatteryCharge()` | Returns battery charge as a percentage (e.g. `100`). |
+
+    ```javascript
+    let flipper = require("flipper");
+
+    print("Model:", flipper.getModel());           // "Flipper Zero"
+    print("Name:", flipper.getName());             // e.g. "Fur1pp44"
+    print("Battery:", flipper.getBatteryCharge()); // e.g. 87
+    print("Vendor:", flipper.firmwareVendor);      // "flipperdevices"
+    ```
+  </Accordion>
+
+</AccordionGroup>

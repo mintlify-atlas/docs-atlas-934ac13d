@@ -1,0 +1,179 @@
+---
+title: Installation
+description: How to install Unleashed Firmware on your Flipper Zero using the web installer, mobile apps, qFlipper, or manual SD card update.
+---
+
+<Note>
+  If this is your first time installing a custom firmware, update your Flipper Zero to the latest official firmware first. If you are already running Unleashed, you can install any new release directly on top — no intermediate steps required.
+</Note>
+
+## Build variants
+
+Each release ships three build variants. Choose one based on which apps you want pre-installed:
+
+| Filename suffix | Base apps | Extra apps |
+|---|:---:|:---:|
+| _(none)_ | Yes | No |
+| `c` | No | No |
+| `e` | Yes | Yes |
+
+- **Base apps** — the default app pack from [xMasterX/all-the-plugins](https://github.com/xMasterX/all-the-plugins#default-pack)
+- **Extra apps** — the extended pack including additional plugins and tools from [xMasterX/all-the-plugins](https://github.com/xMasterX/all-the-plugins#extra-pack)
+- **`c` build** — firmware only, no bundled third-party apps; useful if you want a minimal install or manage apps separately
+
+The full filename format is `flipper-z-f7-update-(version)(e/c).tgz`, where `flipper-z` = Flipper Zero device, `f7` = hardware version, and `update` = full update package containing firmware, assets, plugins, and IR libraries.
+
+<Tip>
+  The `e` build is recommended for most users. It includes the base app pack plus extra community apps out of the box.
+</Tip>
+
+<Warning>
+  RGB backlight support is included in all builds but must be enabled manually in **Settings → LCD & Notifications → RGB mod settings**. Only enable this if your Flipper Zero has the RGB backlight hardware mod installed. Enabling it on an unmodded device will break the backlight.
+</Warning>
+
+## Installation methods
+
+<Tabs>
+  <Tab title="Web installer (recommended)">
+    The Unleashed FW Web Installer is the fastest way to install. It flashes firmware and all assets in one step.
+
+    <Steps>
+      <Step title="Open the web installer">
+        Go to [web.unleashedflip.com](https://web.unleashedflip.com) in a Chromium-based browser (Google Chrome, Microsoft Edge, Brave, Opera, or Vivaldi). The installer does not work in Firefox or Safari.
+      </Step>
+      <Step title="Connect your Flipper">
+        Plug your Flipper Zero in via USB, then click **Connect**. Select your device in the browser popup.
+      </Step>
+      <Step title="Select a branch">
+        Choose **Release** for the latest stable build or **Dev** for the latest development build.
+      </Step>
+      <Step title="Install">
+        Click **Install** and wait for the process to complete. All firmware and assets will be pre-installed automatically.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Flipper Lab / web updater">
+    <Steps>
+      <Step title="Open the latest release page">
+        Go to [github.com/DarkFlippers/unleashed-firmware/releases/latest](https://github.com/DarkFlippers/unleashed-firmware/releases/latest).
+      </Step>
+      <Step title="Connect and open the web updater">
+        Click **Install via Web Updater** on the release page. On the web updater page, click **Connect** and select your device.
+      </Step>
+      <Step title="Install">
+        Click **Install** and wait for the update to complete. All assets will be pre-installed.
+      </Step>
+    </Steps>
+
+    <Note>
+      Close qFlipper before using the web updater. Having qFlipper open will prevent the browser from connecting to your Flipper.
+    </Note>
+  </Tab>
+
+  <Tab title="iOS mobile app">
+    <Steps>
+      <Step title="Download the update package">
+        Go to [github.com/DarkFlippers/unleashed-firmware/releases/latest](https://github.com/DarkFlippers/unleashed-firmware/releases/latest) and download `flipper-z-f7-update-(version).tgz`.
+      </Step>
+      <Step title="Open the file in the Flipper app">
+        Open the **Files** app on iOS, navigate to your downloads, select the `.tgz` file, tap **Share**, and then select the **Flipper** app.
+      </Step>
+      <Step title="Start the update">
+        In the Flipper app, tap the green **Update** button. Confirm the update channel shows `Custom flipper-z-f7-update...`.
+      </Step>
+      <Step title="Wait for completion">
+        Wait for the update to finish. The iOS app may display an error at the end — this is expected. Your Flipper will have updated successfully.
+      </Step>
+    </Steps>
+
+    <Note>
+      The default iOS Files app does not show all files in the `.tgz` archive (it may show 3 instead of 6). This is a display issue only; the Flipper app handles the extraction correctly.
+    </Note>
+  </Tab>
+
+  <Tab title="Android mobile app (tgz download)">
+    <Steps>
+      <Step title="Download the update package">
+        Go to [github.com/DarkFlippers/unleashed-firmware/releases/latest](https://github.com/DarkFlippers/unleashed-firmware/releases/latest) and download `flipper-z-f7-update-(version).tgz`.
+      </Step>
+      <Step title="Select a custom update channel">
+        In the Flipper mobile app, tap **Update channel** and select **Custom**.
+      </Step>
+      <Step title="Select the downloaded file">
+        Choose the `.tgz` file you downloaded.
+      </Step>
+      <Step title="Start the update">
+        Tap **Update** and wait for the process to complete.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Android mobile app (web updater link)">
+    <Steps>
+      <Step title="Open the latest release page">
+        Go to [github.com/DarkFlippers/unleashed-firmware/releases/latest](https://github.com/DarkFlippers/unleashed-firmware/releases/latest).
+      </Step>
+      <Step title="Tap Install via Web Updater">
+        Tap **Install via Web Updater**. When prompted to choose an app, select the **Flipper** app instead of a browser.
+      </Step>
+      <Step title="Complete the update">
+        Follow the in-app prompts and wait for the update to finish.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="qFlipper">
+    <Steps>
+      <Step title="Download qFlipper">
+        Download qFlipper 1.2.0 or later from [flipperzero.one/update](https://flipperzero.one/update). This version supports `.tgz` installation.
+      </Step>
+      <Step title="Download the update package">
+        Go to [github.com/DarkFlippers/unleashed-firmware/releases/latest](https://github.com/DarkFlippers/unleashed-firmware/releases/latest) and download `flipper-z-f7-update-(version).tgz`.
+      </Step>
+      <Step title="Connect and install from file">
+        Launch qFlipper, connect your Flipper Zero via USB, and click **Install from file**.
+      </Step>
+      <Step title="Select the file and wait">
+        Select the `flipper-z-f7-update-(version).tgz` file you downloaded. The update will start automatically. Wait for it to complete.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Manual SD card update">
+    <Steps>
+      <Step title="Download and unpack the update package">
+        Download `flipper-z-f7-update-(version).tgz` from [github.com/DarkFlippers/unleashed-firmware/releases/latest](https://github.com/DarkFlippers/unleashed-firmware/releases/latest) and extract it. You will find a folder named `f7-update-(version)` containing files such as `update.fuf` and `resources.tar`.
+      </Step>
+      <Step title="Copy the folder to your SD card">
+        Remove the microSD card from your Flipper and insert it into your PC or smartphone. Create a folder named `update` at the root of the SD card, then copy the extracted `f7-update-(version)` folder into it.
+
+        The result should be: `update/f7-update-(version)/` with all files inside.
+
+        You can skip removing the SD card and instead upload the files through qFlipper's file manager.
+      </Step>
+      <Step title="Verify all files are present">
+        Confirm that all files from the archive are on the SD card before proceeding.
+      </Step>
+      <Step title="Run the update from Flipper">
+        Insert the microSD card back into your Flipper, open the file browser, and navigate to:
+
+        ```text
+        update/f7-update-(version)/update.fuf
+        ```
+
+        Open `update.fuf` to start the update. Wait for all stages to complete.
+      </Step>
+    </Steps>
+
+    <Note>
+      The iOS Files app does not display all archive contents correctly (shows 3 files instead of 6). Use a PC or Android device to extract and copy the files when using this method.
+    </Note>
+  </Tab>
+</Tabs>
+
+## After installing
+
+- Read the [plugin and feature instructions](https://github.com/DarkFlippers/unleashed-firmware#instructions) to learn how to use bundled apps.
+- Check the [Sub-GHz Remote app guide](/subghz/remote-app) if you want to configure multi-button remote control files.
+- See the [FAQ](/faq) for common post-install questions.

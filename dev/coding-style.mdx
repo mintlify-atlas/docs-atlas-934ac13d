@@ -1,0 +1,94 @@
+---
+title: 'Coding style'
+description: 'Naming conventions, formatting rules, and language standards for Unleashed firmware contributions.'
+---
+
+This page documents the coding standards enforced during PR review. Automatic formatting is available via `./fbt format`, but the rules below are still mandatory and not fully covered by linters.
+
+<Note>
+Third-party libraries are exempt from these rules. Some subsystems (such as assets) have their own supplemental guides — check the relevant `ReadMe.md` for details.
+</Note>
+
+## General principles
+
+- **Readability and simplicity first.** Avoid complex one-liners. Keep code complexity under control.
+- **Self-documenting names.** Variable and function names must clearly describe what they do, even if that means longer names. Avoid single-letter variables.
+- **Encapsulation.** Don't expose raw data. Provide methods to work with it — nearly everything in the firmware is built around this concept.
+- **Comment when needed.** Add comments for non-obvious logic. Reference the standard or specification you are implementing.
+
+## C coding style
+
+### Formatting
+
+- **Indentation:** 4 spaces (tab = 4 spaces, no tab characters)
+- Run `./fbt format` before committing to reformat source code and check style compliance.
+
+### Naming conventions
+
+<AccordionGroup>
+  <Accordion title="Type names — PascalCase">
+
+Structs, typedefs, and other type names use PascalCase.
+
+```c
+FuriHalUsb
+Gui
+SubGhzKeystore
+```
+
+  </Accordion>
+  <Accordion title="Functions — snake_case">
+
+All functions use lowercase snake_case.
+
+```c
+furi_hal_usb_init
+gui_add_view_port
+subghz_keystore_read
+```
+
+  </Accordion>
+  <Accordion title="File and package names as prefixes">
+
+The file name is a prefix for its contents. A module named `SubGhz Keystore` lives in `subghz_keystore.h`, defines the type `SubGhzKeystore`, and exports functions like `subghz_keystore_read`.
+
+This rule makes it straightforward to locate types, functions, and source files by name.
+
+  </Accordion>
+  <Accordion title="File name rules">
+
+| Item        | Pattern                                 |
+| ----------- | --------------------------------------- |
+| Directories | `^[0-9A-Za-z_]+$`                       |
+| File names  | `^[0-9A-Za-z_]+\.[a-z]+$`              |
+| Extensions  | `.h`, `.c`, `.cpp`, `.cxx`, `.hpp`      |
+
+These rules are enforced by the linter.
+
+  </Accordion>
+  <Accordion title="Standard function suffixes">
+
+| Suffix  | Meaning                                                     |
+| ------- | ----------------------------------------------------------- |
+| `alloc` | Allocate and initialize an instance. C-style constructor. Returns a pointer to the new instance. |
+| `free`  | De-initialize and release an instance. C-style destructor. Takes a pointer to the instance. |
+
+  </Accordion>
+</AccordionGroup>
+
+## C++ coding style
+
+C++ support is a work in progress. Use the C style guide as a base until a dedicated C++ guide is available.
+
+## Python coding style
+
+- **Indentation:** 4 spaces
+- Run [black](https://pypi.org/project/black/) to reformat Python source code before committing.
+
+## Style inspirations
+
+The guide is inspired by (but not required to be compatible with):
+
+- [Linux kernel coding style](https://www.kernel.org/doc/html/v4.10/process/coding-style.html)
+- [Unreal Engine coding standards](https://docs.unrealengine.com/en-US/Programming/Development/CodingStandard)
+- [WebKit code style guidelines](https://webkit.org/code-style-guidelines/)

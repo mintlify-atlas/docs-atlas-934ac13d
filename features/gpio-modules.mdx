@@ -1,0 +1,157 @@
+---
+title: "GPIO & external modules"
+description: "Expand your Flipper Zero with external hardware modules. Supported: NRF24, WiFi Scanner, ESP32 Marauder, Unitemp sensors, GPS, i2c Tools, ESP32-CAM, and SentrySafe."
+---
+
+The Flipper Zero GPIO header exposes SPI, UART, I2C, and power pins that external modules can connect to. Unleashed Firmware bundles plugins for a range of expansion hardware — from wireless packet sniffers to temperature sensors and camera modules.
+
+<Note>
+  All GPIO plugins require specific external hardware. The Flipper Zero does not include these modules — you need to purchase or build them separately.
+</Note>
+
+## Supported modules
+
+<CardGroup cols={2}>
+  <Card title="NRF24" icon="wifi">
+    2.4 GHz radio sniffer and MouseJack injection tool.
+  </Card>
+  <Card title="WiFi Scanner (ESP8266)" icon="magnifying-glass">
+    Passive 802.11 network scanner using an ESP8266 module.
+  </Card>
+  <Card title="ESP32 WiFi Marauder" icon="triangle-exclamation">
+    Active WiFi auditing toolkit for 802.11 networks.
+  </Card>
+  <Card title="Unitemp" icon="temperature-half">
+    Temperature, humidity, and pressure sensor reader.
+  </Card>
+  <Card title="GPS NMEA" icon="location-dot">
+    GPS receiver that displays location data from any NMEA-compatible module.
+  </Card>
+  <Card title="i2c Tools" icon="microchip">
+    Scan and interact with I2C devices connected to the GPIO pins.
+  </Card>
+  <Card title="ESP32-CAM Camera Suite" icon="camera">
+    Live camera feed and image capture via an ESP32-CAM module.
+  </Card>
+  <Card title="SentrySafe" icon="lock-open">
+    Exploit a vulnerability to open Sentry Safe and Master Lock electronic safes.
+  </Card>
+</CardGroup>
+
+---
+
+## NRF24
+
+The **NRF24 plugin** uses a Nordic Semiconductors nRF24L01+ module connected via SPI to sniff and inject 2.4 GHz wireless keyboard and mouse packets. It includes two tools:
+
+- **NRF24 Sniffer** — scan channels and capture 2.4 GHz traffic to find device addresses
+- **NRF24 MouseJacker** — inject keystrokes into wireless keyboards using the discovered address (MouseJack attack)
+
+**Hardware required:** nRF24L01 or nRF24L01+ module
+
+**GPIO wiring:**
+
+| Flipper pin | nRF24L01 pin |
+|---|---|
+| 2 / A7 | MOSI / 6 |
+| 3 / A6 | MISO / 7 |
+| 4 / A4 | CSN / 4 |
+| 5 / B3 | SCK / 5 |
+| 6 / B2 | CE / 3 |
+| 8 / GND | GND / 1 |
+| 9 / 3V3 | VCC / 2 |
+
+<Tip>
+  If the nRF module behaves erratically, add a 3.3–10 µF capacitor across VCC and GND. A 0.1 µF capacitor in parallel helps with high-frequency switching noise.
+</Tip>
+
+<Warning>
+  The NRF24 apps are for educational purposes only. Only use them on your own equipment.
+</Warning>
+
+---
+
+## WiFi Scanner (ESP8266)
+
+The **WiFi Scanner** plugin uses an ESP8266-based module to perform passive 802.11 network scanning. It displays detected networks, signal strengths, and channel information.
+
+**Hardware required:** FlipperZero WiFi Scanner Module (ESP8266-based)
+
+**Flashing the module:** Use the web flasher at [sequoiasan.github.io/FlipperZero-WiFi-Scanner_Module](https://sequoiasan.github.io/FlipperZero-WiFi-Scanner_Module/) to install the required firmware on the ESP8266.
+
+---
+
+## ESP32 WiFi Marauder
+
+The **ESP32 WiFi Marauder** plugin connects to a WiFi Dev Board or any ESP32 running the Marauder firmware. It provides active WiFi auditing capabilities including scanning, monitoring, and targeted packet transmission.
+
+**Hardware required:** Flipper Zero WiFi Dev Board or compatible ESP32 module running [ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) firmware
+
+**How to flash:** Follow the [UberGuidoZ WiFi Dev Board guide](https://github.com/UberGuidoZ/Flipper/tree/main/Wifi_DevBoard) for flashing and setup instructions.
+
+<Warning>
+  WiFi auditing tools must only be used on networks you own or have explicit permission to test.
+</Warning>
+
+---
+
+## Unitemp — temperature sensors
+
+**Unitemp** reads data from temperature, humidity, and atmospheric pressure sensors connected to the GPIO header. It displays live readings and supports a range of popular sensor ICs.
+
+**Hardware required:** One or more supported sensor modules. Supported sensors and wiring diagrams are documented in the [Unitemp repository](https://github.com/quen0n/unitemp-flipperzero#readme).
+
+---
+
+## GPS (NMEA)
+
+The **GPS NMEA** plugin receives location data from any GPS module that outputs standard NMEA sentences over UART. It displays latitude, longitude, altitude, speed, and satellite count.
+
+**Hardware required:** Any NMEA-compatible GPS module with UART output (3.3 V logic)
+
+Connect the module's TX line to the Flipper's RX pin and supply 3.3 V or 5 V power from the GPIO header, depending on the module's requirements.
+
+---
+
+## i2c Tools
+
+The **i2c Tools** plugin lets you scan for devices on the I2C bus, read registers, and write values. It is useful for diagnosing I2C hardware and exploring connected peripherals.
+
+**Hardware required:** Any I2C device connected to Flipper's SDA (pin 15 / C1) and SCL (pin 16 / C0) GPIO pins.
+
+---
+
+## ESP32-CAM Camera Suite
+
+The **ESP32-CAM Camera Suite** streams a live camera feed from an ESP32-CAM module to the Flipper Zero screen. It also supports image capture.
+
+**Hardware required:** ESP32-CAM module with the Camera Suite firmware
+
+Full setup instructions, including firmware flashing and wiring, are available at [github.com/CodyTolene/Flipper-Zero-Camera-Suite](https://github.com/CodyTolene/Flipper-Zero-Camera-Suite).
+
+---
+
+## SentrySafe
+
+The **SentrySafe plugin** exploits a known vulnerability in Sentry Safe and Master Lock electronic safes to open them without a PIN code. The vulnerability is triggered by applying a specific signal to the safe's keypad connector.
+
+**Hardware required:** Two wires and access to the safe's keypad port
+
+<Steps>
+  <Step title="Connect the wires">
+    - Flipper **GPIO 8 / GND** → Black wire on the safe keypad connector
+    - Flipper **GPIO 15 / C1** → Green wire on the safe keypad connector
+  </Step>
+  <Step title="Launch the plugin">
+    Open **SentrySafe** from the Flipper GPIO apps menu.
+  </Step>
+  <Step title="Trigger the unlock">
+    Press **OK** (Enter) in the plugin. The safe will open.
+  </Step>
+</Steps>
+
+<Warning>
+  Only use this plugin on safes you own. Using it on someone else's property without permission is illegal.
+</Warning>
+
+The original vulnerability disclosure is at [github.com/H4ckd4ddy/bypass-sentry-safe](https://github.com/H4ckd4ddy/bypass-sentry-safe).

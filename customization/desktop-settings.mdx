@@ -1,0 +1,48 @@
+---
+title: "Desktop settings"
+description: "Configure the Flipper Zero desktop experience: clock display, battery styles, device name, Dummy Mode games, PIN lock, RGB backlight mod, and BadUSB keyboard layouts."
+---
+
+Unleashed Firmware adds several desktop and display options not present in the official firmware. All settings described here are persistent and survive firmware updates unless the settings struct changes between releases.
+
+## Clock display
+
+Navigate to **Settings → Desktop → Show Clock** to enable a real-time clock on the main desktop screen.
+
+## Battery percentage styles
+
+Navigate to **Settings → Desktop → Battery View** to choose how the battery level is displayed. Options include icon-only and various percentage styles.
+
+## Custom device name
+
+Navigate to **Settings → Desktop → Change Flipper Name** to set a custom name for your Flipper Zero. The name is stored on the microSD card and persists across firmware updates.
+
+See [Flipper name](/customization/flipper-name) for the full walkthrough, including how to reset to the default name and how to re-pair over Bluetooth after renaming.
+
+## More games in Dummy Mode
+
+Dummy Mode now includes additional games. While in Dummy Mode, click or hold any of the arrow buttons to access them.
+
+## Lock with PIN by holding UP
+
+Hold the **UP** button on the main screen to immediately lock the device. If a PIN is configured, it locks with the PIN; otherwise it applies a regular lock.
+
+## RGB backlight mod support
+
+<Warning>
+  This setting is only for Flipper Zero units that have been physically modified with an RGB backlight hardware mod. Do not enable this on an unmodified Flipper — it will break the backlight and leave the screen unlit.
+</Warning>
+
+If your Flipper Zero has the RGB backlight hardware mod installed, navigate to **Settings → LCD & Notifications → RGB mod settings** to enable and configure it.
+
+If you accidentally enabled the RGB mod setting on an unmodified Flipper and the backlight stopped working, disable it via the same path: **Settings → LCD & Notifications → RGB mod settings**.
+
+## BadUSB keyboard layouts
+
+The BadUSB app supports custom keyboard layouts, allowing you to write scripts targeting keyboards other than the default US layout.
+
+Layouts are added as files on the microSD card. For the full list of available layouts and instructions on how to add new ones, see the [BadUSB keyboard layouts repository](https://github.com/dummy-decoy/flipperzero_badusb_kl) by dummy-decoy.
+
+<Tip>
+  BadUSB also supports Bluetooth HID injection (BadKB), which is integrated directly into the BadUSB app in Unleashed Firmware.
+</Tip>

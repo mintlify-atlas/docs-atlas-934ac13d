@@ -1,0 +1,75 @@
+---
+title: "NFC & RFID"
+description: "Transit card parsers, EMV data reading, LFRFID and iButton fuzzers, extra Mifare Classic keys, Picopass/iClass emulation, and more."
+---
+
+Unleashed Firmware extends NFC and RFID capabilities with additional protocol parsers, a larger key dictionary for Mifare Classic attacks, new manual card creation options, and fuzzer plugins for low-frequency cards and iButton keys.
+
+## NFC improvements
+
+### Transit card parsers
+
+Unleashed includes parsers for a wide range of transit and payment cards that the official firmware does not support:
+
+<CardGroup cols={2}>
+  <Card title="Troika" icon="train-subway">
+    Moscow metro card — reworked parser with improved data extraction.
+  </Card>
+  <Card title="Umarsh" icon="bus">
+    Russian regional transit card parser.
+  </Card>
+  <Card title="Kazan" icon="train">
+    Kazan metro card parser.
+  </Card>
+  <Card title="Metromoney" icon="money-bill">
+    Georgia transit card parser.
+  </Card>
+  <Card title="Moscow Social Card" icon="id-card">
+    Moscow social benefits card parser.
+  </Card>
+  <Card title="Zolotaya Korona" icon="coins">
+    Russian payment system card parser.
+  </Card>
+</CardGroup>
+
+Additional parsers are maintained in the firmware at `applications/main/nfc/plugins/supported_cards/`.
+
+### EMV protocol parser
+
+Unleashed adds an **EMV protocol parser** that reads and displays publicly available data from contactless bank cards — card number, expiry date, and transaction history where available. This data is already publicly broadcast by the card; no authentication is required or bypassed.
+
+### Mifare Classic — add manually with custom UID
+
+The **NFC → Add manually** menu now includes Mifare Classic as an option. You can create a Mifare Classic entry with a custom UID directly on the device, without needing to capture a physical card.
+
+### Extra keys in system dictionary
+
+The Mifare Classic system key dictionary has been expanded with additional known keys. This increases the success rate of the dictionary attack when reading protected Mifare Classic cards.
+
+### Picopass / iClass emulation
+
+Unleashed Firmware includes support for **Picopass** and **iClass** card emulation, allowing the Flipper to present itself as a Picopass/iClass credential to compatible readers.
+
+## RFID improvements
+
+### DEZ 8 display for EM4100
+
+When reading EM4100 cards, Unleashed shows the card data in **DEZ 8** (decimal 8-digit) format in addition to the standard hex display. DEZ 8 is the format used by many access control systems to identify cards.
+
+### LFRFID Fuzzer plugin
+
+The **LFRFID Fuzzer** plugin sends a sequence of low-frequency RFID signals across incrementing card IDs. It is used for testing and researching LFRFID-based access control systems.
+
+<Warning>
+  Only use the fuzzer on systems you own or have explicit permission to test.
+</Warning>
+
+## iButton improvements
+
+### iButton Fuzzer plugin
+
+The **iButton Fuzzer** plugin iterates through iButton key IDs in sequence and transmits them. It supports Dallas (1-Wire) iButton keys used in building access systems.
+
+<Warning>
+  Only use the fuzzer on systems you own or have explicit permission to test.
+</Warning>

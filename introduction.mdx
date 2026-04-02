@@ -1,0 +1,68 @@
+---
+title: Introduction
+description: What Unleashed Firmware is, why it exists, and what it adds over the official Flipper Zero firmware.
+---
+
+Unleashed Firmware is a fork of the official [Flipper Zero firmware](https://github.com/flipperdevices/flipperzero-firmware). It is the most stable custom build available, incorporating new features and improvements while remaining fully compatible with the official API and app ecosystem.
+
+<Warning>
+  This software is intended solely for experimental and educational purposes. Use only within the bounds of applicable law. This project is developed independently and is not affiliated with Flipper Devices.
+
+  DarkFlippers/unleashed-firmware is the only official page of this project. There are no paid, premium, or closed-source versions. Anyone claiming otherwise is a scammer.
+</Warning>
+
+## Why Unleashed instead of official firmware?
+
+The official firmware enforces regional Sub-GHz transmission restrictions and ships without several quality-of-life features. Unleashed removes those restrictions, adds support for dozens of new protocols, ships extra bundled apps, and backports community improvements — all without breaking compatibility with the official app catalog or mobile apps.
+
+Key differences from official firmware:
+
+- **No Sub-GHz region locks** — all CC1101-supported frequencies work out of the box
+- **Rolling code protocol support** — capture and replay supported rolling code remotes (FAAC SLH, BFT Mitto, Nice Flor-S, Somfy Telis, CAME Atomo, and more)
+- **Extra bundled apps** — Sub-GHz Bruteforce, Sub-GHz Remote, LFRFID Fuzzer, iButton Fuzzer, and more included in every release
+- **Quality-of-life improvements** — customizable Flipper name, clock on desktop, battery percentage, BadKB (BadUSB over Bluetooth), and additional keyboard layouts
+- **NFC enhancements** — extra Mifare Classic keys, EMV public data parser, transit card parsers for Troika, Kazan, Metromoney, and others
+- **Fully open source** — every release is free; there will never be a paywall
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Sub-GHz" icon="radio" href="/features/sub-ghz">
+    Unlocked frequencies, 60+ protocols, rolling code capture and replay, external CC1101 module support, Sub-GHz Bruteforce and Remote apps.
+  </Card>
+  <Card title="NFC & RFID" icon="credit-card" href="/features/nfc-rfid">
+    Transit card parsers, EMV public data reading, extra Mifare Classic dictionary keys, LFRFID Fuzzer, iButton Fuzzer.
+  </Card>
+  <Card title="Infrared" icon="wave-sine" href="/features/infrared">
+    Universal remotes for TV, projectors, air conditioners, fans, and audio devices. External IR module support.
+  </Card>
+  <Card title="BadUSB / BadKB" icon="keyboard" href="/features/badusb">
+    HID injection over USB and Bluetooth (BadKB). Custom keyboard layouts. Integrated into the BadUSB app.
+  </Card>
+  <Card title="GPIO & modules" icon="microchip" href="/features/gpio-modules">
+    Plugins for CC1101 external radio, NRF24, ESP8266/ESP32 Wi-Fi, GPS, camera, temperature sensors, and more.
+  </Card>
+</CardGroup>
+
+## Releases
+
+Unleashed Firmware has two release channels:
+
+- **Stable releases** — published on [GitHub Releases](https://github.com/DarkFlippers/unleashed-firmware/releases) and the [Telegram channel](https://t.me/unleashed_fw)
+- **Dev builds** — built automatically from the `dev` branch; available at [dev.unleashedflip.com](https://dev.unleashedflip.com) and the [Telegram dev channel](https://t.me/kotnehleb)
+
+<Note>
+  Dev builds are not release-ready and may contain bugs. Use stable releases for everyday use.
+</Note>
+
+## Community
+
+- **Discord:** [discord.unleashedflip.com](https://discord.unleashedflip.com)
+- **Telegram (English):** [t.me/flipperzero_unofficial](https://t.me/flipperzero_unofficial)
+- **Telegram (Russian):** [t.me/flipperzero_unofficial_ru](https://t.me/flipperzero_unofficial_ru)
+- **Telegram (Ukrainian):** [t.me/flipperzero_unofficial_ua](https://t.me/flipperzero_unofficial_ua)
+- **GitHub:** [DarkFlippers/unleashed-firmware](https://github.com/DarkFlippers/unleashed-firmware)
+
+## Install now
+
+Ready to install? See the [installation guide](/installation) for all methods including the one-click web installer.

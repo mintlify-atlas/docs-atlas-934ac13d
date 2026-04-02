@@ -1,0 +1,118 @@
+---
+title: 'Hardware targets'
+description: 'How hardware targets work in the Unleashed firmware, including target definitions, the f7 target, and the API symbols CSV.'
+---
+
+The Unleashed firmware is modular and supports different hardware configurations within a shared codebase. Hardware-specific differences — such as HAL implementations, linker scripts, and SDK data — are encapsulated in a _target definition_.
+
+## What a target is
+
+A target bundles everything that makes the firmware hardware-specific:
+
+- `furi_hal` board initialization code
+- Linker scripts for flash, RAM, and external apps
+- SDK header paths
+- API symbol tables used for FAP compatibility
+- Library dependencies for the linker
+
+Targets are defined in the `targets/` directory. Each target is a subdirectory containing a `target.json` definition file and any other files it references.
+
+### Available targets
+
+| Directory | Hardware |
+|---|---|
+| `targets/f7/` | Flipper Zero (the primary target) |
+| `targets/f18/` | Alternative hardware target (not Flipper Zero) |
+| `targets/furi_hal_include/` | Global Furi HAL headers shared across all targets |
+
+## The target definition file
+
+Each target directory must contain a `target.json` file. The following fields are supported:
+
+| Field | Type | Description |
+|---|---|---|
+| `include_paths` | `string[]` | Paths relative to the target folder to add to the global C/C++ header lookup path. |
+| `sdk_header_paths` | `string[]` | Paths relative to the target folder from which headers are gathered for the SDK. |
+| `startup_script` | `string` | Filename of the startup script that performs initial hardware initialization. |
+| `linker_script_flash` | `string` | Linker script for the main firmware image. |
+| `linker_script_ram` | `string` | Linker script for the updater build configuration. |
+| `linker_script_app` | `string` | Linker script for linking `.fap` external app files. |
+| `sdk_symbols` | `string` | Filename of the `.csv` file containing the SDK symbol table for this target. |
+| `linker_dependencies` | `string[]` | Libraries to link the firmware with. Libraries not listed here will not be built by FBT. Specify a library name twice if multiple link passes are required. |
+| `inherit` | `string` | Hardware target to inherit the main configuration from. The current target can add to list-type fields or override scalar fields. |
+| `excluded_sources` | `string[]` | Source files from the inherited configuration(s) to exclude from the build. |
+| `excluded_headers` | `string[]` | Headers from the inherited configuration(s) to exclude from the generated SDK. |
+| `excluded_modules` | `string[]` | FBT library (module) names to exclude from the build environment configuration. |
+
+<Note>
+  By default, FBT compiles all source files found in the target folder. Use `excluded_sources` to opt out of specific files from an inherited configuration.
+</Note>
+
+## The f7 target (Flipper Zero)
+
+The `f7` target is the default build target, corresponding to `TARGET_HW=7` in `fbt_options.py`. Its definition at `targets/f7/target.json` configures the full Flipper Zero hardware:
+
+- **Include paths**: `ble_glue`, `fatfs`, `furi_hal`, `inc`
+- **SDK header paths**: global `furi_hal_include`, plus `furi_hal`, `platform_specific`, BLE glue headers
+- **Linker scripts**: `stm32wb55xx_flash.ld` (flash), `stm32wb55xx_ram_fw.ld` (updater), `application_ext.ld` (FAP apps)
+- **SDK symbols**: `api_symbols.csv`
+- **Linker dependencies**: `furi`, `freertos`, `stm32wb`, `nfc`, `subghz`, `infrared`, `lfrfid`, `mjs`, `mbedtls`, `flipper_application`, `u8g2`, and many more
+
+## API symbols CSV
+
+Each target includes an `api_symbols.csv` file that defines the public SDK surface for that hardware. For the f7 target this is at `targets/f7/api_symbols.csv`.
+
+The CSV has five columns:
+
+| Column | Description |
+|---|---|
+| `entry` | Type of entry: `Version`, `Header`, or `Function`/`Variable` |
+| `status` | `+` means included in the SDK |
+| `name` | Symbol name or header path |
+| `type` | C type for variables; blank for functions and headers |
+| `params` | Function parameter types; blank for variables and headers |
+
+The first row records the SDK version number:
+
+```
+entry,status,name,type,params
+Version,+,87.7,,
+```
+
+Subsequent rows list the SDK headers and exported symbols:
+
+```
+Header,+,applications/services/gui/gui.h,,
+Function,+,gui_add_view_port,void,"Gui*, ViewPort*, GuiLayer"
+```
+
+### Role in FAP compatibility
+
+The API symbols CSV is the mechanism that enforces binary compatibility between FAP external apps and firmware builds. When FBT compiles a `.fap`, it checks the app's required symbols against the target's `api_symbols.csv`. The version number in the CSV (`87.7` in the example above) is embedded in the FAP and checked at runtime when the app is loaded — if the firmware's API version does not match, the Flipper will refuse to run the FAP.
+
+This means:
+- Adding or removing entries from `api_symbols.csv` constitutes an API change and must be accompanied by a version bump.
+- FAPs built against one API version will not run on firmware with a different API version.
+- The CSV is the authoritative record of what the firmware exposes to external apps.
+
+## Targeting a specific hardware target
+
+Pass `TARGET_HW` to FBT to build for a non-default target:
+
+```bash
+./fbt TARGET_HW=18 flash_usb_full
+```
+
+## Apps and hardware compatibility
+
+Not all apps are available on every hardware target.
+
+**Built-in apps** — select a compatible app set using the `FIRMWARE_APP_SET` build option. See the [FBT reference](/dev/fbt-reference) for details on application sets.
+
+**External FAPs** — specify compatible targets in the app's `application.fam` manifest. To restrict an app to f7 only, add the following to its manifest:
+
+```python
+targets=["f7"],
+```
+
+Apps that list explicit targets will not be built for other targets.

@@ -1,0 +1,179 @@
+---
+title: 'FBT reference'
+description: 'Complete reference for Flipper Build Tool (FBT) targets, command-line parameters, and configuration options.'
+---
+
+FBT (Flipper Build Tool) is the entry point for all firmware build operations. It is invoked as `./fbt` from the firmware root and wraps the [scons](https://scons.org/) build system. FBT tracks internal dependencies, so you only need to specify the highest-level target you need.
+
+<Note>
+  If you only need to build and debug a single external app rather than the full firmware, consider using [ufbt](https://pypi.org/project/ufbt/) instead.
+</Note>
+
+## Invoking FBT
+
+```bash
+./fbt [OPTIONS] [VARIABLES] [TARGETS]
+```
+
+You can combine configuration variables, flags, and multiple targets in one invocation:
+
+```bash
+./fbt COMPACT=1 DEBUG=0 VERBOSE=1 updater_package copro_dist
+```
+
+To clean build artifacts for specified targets, add the `-c` flag:
+
+```bash
+./fbt -c updater_package
+```
+
+## Build directories
+
+FBT builds firmware and the updater in separate subdirectories under `build/`. The subdirectory name encodes the current `COMPACT` and `DEBUG` settings.
+
+For IDE integration, the most recently built variant is always symlinked as `build/latest`. This directory also contains a `compile_commands.json` file used for code completion in IDEs.
+
+<Note>
+  `build/latest` and `compile_commands.json` are only updated when you rebuild the firmware itself. Running other tasks — like flashing or building an update bundle for a different configuration — does not update the symlink.
+</Note>
+
+## High-level targets
+
+These are the targets you will use most often.
+
+| Target | Description |
+|---|---|
+| `fw_dist` | Build firmware and publish artifacts to `dist/`. Default target when none is specified. |
+| `fap_dist` | Build all external plugin apps and publish to `dist/`. |
+| `updater_package` | Build a full self-update package: firmware DFU, radio stack, and SD card resources. |
+| `updater_minpackage` | Build a minimal self-update package: firmware DFU file only. |
+| `copro_dist` | Bundle Core2 FUS+stack binaries for qFlipper. |
+| `flash` | Flash the attached device over SWD using an auto-detected probe. Override probe with `SWD_TRANSPORT=...` and select a specific probe with `SWD_TRANSPORT_SERIAL=...`. |
+| `flash_usb` | Build and install a minimal update package on the device over USB. |
+| `flash_usb_full` | Build and install a full update package on the device over USB. |
+| `debug` | Build and flash firmware, then attach GDB with the firmware `.elf` loaded. |
+| `blackmagic` | Debug firmware using a Blackmagic probe (Wi-Fi devboard). |
+| `openocd` | Start OpenOCD. Pass extra arguments with `ARGS="..."`. |
+| `devboard_flash` | Update the Wi-Fi devboard firmware. Pass extra arguments with `ARGS="..."`, e.g., `ARGS="-c dev"`. |
+| `get_blackmagic` | Print the Blackmagic address in GDB remote format. Useful for IDE integration. |
+| `get_stlink` | Print serial numbers for all attached STLink probes. Use output with `SWD_TRANSPORT_SERIAL=...`. |
+| `lint` / `format` | Run `clang-format` on C source files. Pass extra arguments with `ARGS="..."`. |
+| `lint_py` / `format_py` | Run [black](https://black.readthedocs.io/en/stable/) on Python files, build system files, and app manifests. |
+| `lint_img` / `format_img` | Check image assets for errors, enforce color depth, and strip metadata. |
+| `lint_all` / `format_all` | Run all linters and formatters. |
+| `firmware_pvs` | Generate a PVS Studio report. Requires PVS Studio on your `PATH`. |
+| `doxygen` | Generate Doxygen documentation. The `doxy` alias also opens a browser to view it. |
+| `cli` | Start a Flipper CLI session over USB. |
+
+### Debug variants
+
+| Target | Description |
+|---|---|
+| `debug_other` | Attach GDB without loading any `.elf`. Lets you manually add symbol files with `add-symbol-file`. |
+| `debug_other_blackmagic` | Same as `debug_other`, using a Blackmagic probe. |
+| `updater_debug` | Attach GDB with the updater's `.elf` loaded. |
+
+## Firmware targets
+
+| Target | Description |
+|---|---|
+| `faps` | Build all external and plugin apps as `.fap` files. |
+| `fap_{APPID}` | Build a single app as a `.fap` by its `appid`. Example: `fap_snake_game`. |
+| `fap_{APPID}_list` | Generate source and assembler listing for a single app's `.fap`. |
+| `firmware_all` / `updater_all` | Build a basic set of firmware binaries. |
+| `firmware_list` / `updater_list` | Generate source and assembler listing for the firmware. |
+| `firmware_cdb` / `updater_cdb` | Generate a `compilation_database.json` for external tools and IDEs. Can be generated without building firmware. |
+
+<Tip>
+  Use `--extra-ext-apps` to force apps into the external build without modifying any manifest files. See [command-line parameters](#command-line-parameters) below.
+</Tip>
+
+## Assets targets
+
+| Target | Description |
+|---|---|
+| `resources` | Build resources and their manifest files. |
+| `dolphin_ext` | Process dolphin animations for the SD card. (Sub-target of `resources`.) |
+| `icons` | Generate `.c` and `.h` files for icons from PNG assets. |
+| `proto` | Generate `.pb.c` and `.pb.h` files from `.proto` sources. |
+| `proto_ver` | Generate a `.h` file containing the protobuf version. |
+| `dolphin_internal` / `dolphin_blocking` | Generate `.c` and `.h` for internal dolphin assets. |
+
+## Command-line parameters
+
+These flags are passed directly to the `fbt` invocation alongside targets and variables:
+
+| Parameter | Description |
+|---|---|
+| `--options optionfile.py` | Load configuration from the specified file. Defaults to `fbt_options.py`. |
+| `--extra-int-apps=app1,app2` | Force listed apps to be compiled as internal apps in the `firmware` target. |
+| `--extra-ext-apps=app1,app2` | Force listed apps to be compiled as external apps in the `firmware_extapps` target. |
+| `--extra-define=A` `--extra-define=B=C` | Pass extra global preprocessor defines to the C/C++ compiler. Can be specified multiple times. |
+| `--proxy-env=VAR1,VAR2` | Expose additional environment variables to subprocesses spawned by FBT. By default FBT sanitizes its environment; see `environ.scons` for the list of variables always forwarded. |
+
+To see all available configuration variables and their current defaults, run:
+
+```bash
+./fbt -h
+```
+
+## Configuration
+
+### fbt_options.py
+
+Default configuration is read from `fbt_options.py` in the firmware root. Values passed on the command line take precedence over this file.
+
+Key options defined in `fbt_options.py`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `TARGET_HW` | `7` | Hardware target number (7 = Flipper Zero f7). |
+| `COMPACT` | `0` | Optimize for size when set to `1`. |
+| `DEBUG` | `1` | Optimize for debugging when set to `1`. |
+| `DIST_SUFFIX` | `"local"` | Suffix appended to output filenames in `dist/`. Overridden by the `DIST_SUFFIX` environment variable if set. |
+| `FIRMWARE_ORIGIN` | `"Unleashed"` | Firmware origin identifier embedded in the build. |
+| `COPRO_STACK_TYPE` | `"ble_light"` | Radio stack type (`ble_light` or `ble_full`). |
+| `FBT_TOOLCHAIN_VERSIONS` | `(" 12.3.", " 13.2.")` | Accepted GCC toolchain versions. |
+| `BLACKMAGIC` | `"auto"` | Blackmagic probe discovery mode. |
+| `FIRMWARE_APP_SET` | `"default"` | Active application set (see below). |
+
+### fbt_options_local.py
+
+Create a file named `fbt_options_local.py` in the firmware root to persistently override options without modifying `fbt_options.py`. It is evaluated automatically when the default options file loads.
+
+```python
+# fbt_options_local.py example
+COMPACT = 1
+DEBUG = 0
+DIST_SUFFIX = "my-build"
+```
+
+### Firmware application sets
+
+You can customize which apps are compiled into the firmware by changing the active application set. Sets are defined in the `FIRMWARE_APPS` map in `fbt_options.py`:
+
+```python
+FIRMWARE_APPS = {
+    "default": [
+        "basic_services",
+        "main_apps",
+        "system_apps",
+        "settings_apps",
+    ],
+    "unit_tests": [
+        "basic_services",
+        "updater_app",
+        "radio_device_cc1101_ext",
+        "unit_tests",
+        "js_app",
+        "infrared",
+        "archive",
+    ],
+}
+```
+
+To select a set, pass `FIRMWARE_APP_SET` on the command line or set it in `fbt_options_local.py`:
+
+```bash
+./fbt FIRMWARE_APP_SET=unit_tests
+```

@@ -1,0 +1,110 @@
+---
+title: "Sub-GHz Remote app"
+description: "Map up to 5 Sub-GHz signal files to Flipper's directional pad buttons for one-tap transmission using the Sub-GHz Remote app."
+---
+
+The Sub-GHz Remote app turns Flipper's directional pad and center button into a 5-button shortcut remote. Each button is mapped to a previously saved `.sub` capture file. Pressing a button transmits that signal immediately — useful when you operate several different devices regularly and want to avoid navigating the file browser each time.
+
+---
+
+## Creating a map file
+
+Map files are plain `.txt` files stored in the `subghz_remote/` folder on your SD card. You can create and edit them directly on the Flipper without a PC.
+
+<Steps>
+  <Step title="Open Sub-GHz Remote">
+    Navigate to **Apps → Sub-GHz → Sub-GHz Remote** on your Flipper.
+  </Step>
+  <Step title="Open the built-in configurator">
+    Press the **Back** button inside the app to open the map file manager. From here you can create a new map or edit an existing one.
+  </Step>
+  <Step title="Assign a .sub file to each button">
+    For each of the five buttons (Up, Down, Left, Right, OK), select the `.sub` file you want to transmit when that button is pressed. The files must already exist in `/ext/subghz/` or its subdirectories.
+  </Step>
+  <Step title="Set display labels">
+    Give each button a short label (up to 16 characters). Labels appear on screen next to each button indicator.
+  </Step>
+  <Step title="Save the map file">
+    Save the configuration. The file is written to `subghz_remote/` on the SD card with a `.txt` extension.
+  </Step>
+</Steps>
+
+---
+
+## Map file format
+
+If you prefer to create or edit the map file on a PC, use the following format. Save the file with a `.txt` extension in the `subghz_remote/` folder on the SD card. The file name can be anything.
+
+```text subghz_remote/my_remote.txt
+UP: /ext/subghz/Up.sub
+DOWN: /ext/subghz/Down.sub
+LEFT: /ext/subghz/Left.sub
+RIGHT: /ext/subghz/Right.sub
+OK: /ext/subghz/Ok.sub
+ULABEL: Up Label
+DLABEL: Down Label
+LLABEL: Left Label
+RLABEL: Right Label
+OKLABEL: Ok Label
+```
+
+Each `UP` / `DOWN` / `LEFT` / `RIGHT` / `OK` key sets the absolute path to the `.sub` file for that button. Each `ULABEL` / `DLABEL` / `LLABEL` / `RLABEL` / `OKLABEL` key sets the text shown on screen for that button.
+
+### Example: multi-device home remote
+
+```text subghz_remote/home.txt
+UP: /ext/subghz/Fan1.sub
+DOWN: /ext/subghz/Fan2.sub
+LEFT: /ext/subghz/Door.sub
+RIGHT: /ext/subghz/Garage3.sub
+OK: /ext/subghz/Garage3l.sub
+ULABEL: Fan ON
+DLABEL: Fan OFF
+LLABEL: Doorbell
+RLABEL: Garage OPEN
+OKLABEL: Garage CLOSE
+```
+
+---
+
+## Button layout reference
+
+| Button | Key in file | Label key |
+|---|---|---|
+| Up (d-pad up) | `UP:` | `ULABEL:` |
+| Down (d-pad down) | `DOWN:` | `DLABEL:` |
+| Left (d-pad left) | `LEFT:` | `LLABEL:` |
+| Right (d-pad right) | `RIGHT:` | `RLABEL:` |
+| Center (OK button) | `OK:` | `OKLABEL:` |
+
+---
+
+## Rules and constraints
+
+<AccordionGroup>
+  <Accordion title="File paths">
+    Paths must be absolute (starting with `/ext/`). Do not use spaces or special characters in paths — hyphens (`-`) and underscores (`_`) are the only exceptions allowed.
+  </Accordion>
+  <Accordion title="Label length">
+    Labels are limited to **16 characters**. Longer labels will overflow the screen display.
+  </Accordion>
+  <Accordion title="Number of map files">
+    You can create as many `.txt` map files as you want in `subghz_remote/`. The file name does not matter — select the one you want when launching the app.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Error: config is incorrect
+
+If a map file is missing required keys or the paths it references do not exist, the app shows:
+
+```
+Config is incorrect.
+
+Please configure map
+
+Press Back to Exit
+```
+
+To fix this, press **Back** to return to the configurator, verify all five button paths point to existing `.sub` files, and confirm the file follows the exact key names shown above.
